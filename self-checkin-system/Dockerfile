@@ -20,12 +20,12 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine AS runner
 WORKDIR /app
 
-# Create non-root system user for security
-RUN addgroup -S eventsync && adduser -S eventsync -G eventsync
-USER eventsync
+# Create directories and set permissions, then switch to non-root user
+RUN mkdir -p /app/certificates /app/qrcodes && \
+    addgroup -S eventsync && adduser -S eventsync -G eventsync && \
+    chown -R eventsync:eventsync /app
 
-# Create directories for certificates and qrcodes
-RUN mkdir -p /app/certificates /app/qrcodes
+USER eventsync
 
 # Copy built JAR from builder stage
 COPY --from=builder /app/target/self-checkin-system-0.0.1-SNAPSHOT.jar app.jar
