@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import Footer from './components/layout/Footer';
@@ -31,22 +31,8 @@ const PageLoadingFallback = () => (
   </div>
 );
 
-function LayoutWrapper() {
+function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const location = useLocation();
-
-  // Standalone pages without navbar/sidebar
-  if (location.pathname === '/login' || location.pathname === '/404' || location.pathname === '/403') {
-    return (
-      <Suspense fallback={<PageLoadingFallback />}>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/403" element={<Forbidden />} />
-          <Route path="/404" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    );
-  }
 
   const toggleSidebar = () => {
     setSidebarCollapsed((prev) => !prev);
@@ -58,27 +44,7 @@ function LayoutWrapper() {
       <div className={`main-container ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <Navbar toggleSidebar={toggleSidebar} />
         <main className="content-body">
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Routes>
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/participants" element={<Participants />} />
-                <Route path="/scanner" element={<QRScanner />} />
-                <Route path="/certificates" element={<Certificates />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/change-password" element={<ChangePassword />} />
-
-                {/* Admin Only Route */}
-                <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
-                  <Route path="/settings" element={<Settings />} />
-                </Route>
-              </Route>
-
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          <Outlet />
         </main>
         <Footer />
       </div>
@@ -87,7 +53,38 @@ function LayoutWrapper() {
 }
 
 function App() {
-  return <LayoutWrapper />;
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      <Routes>
+        {/* Standalone Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/403" element={<Forbidden />} />
+        <Route path="/404" element={<NotFound />} />
+
+        {/* Protected Application Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/participants" element={<Participants />} />
+            <Route path="/scanner" element={<QRScanner />} />
+            <Route path="/certificates" element={<Certificates />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/change-password" element={<ChangePassword />} />
+
+            {/* Admin Only Route */}
+            <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
+              <Route path="/settings" element={<Settings />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Catch-All Fallback */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  );
 }
 
 export default App;
