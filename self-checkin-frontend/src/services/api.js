@@ -9,7 +9,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 15000,
+  timeout: 60000, // 60 seconds to accommodate cloud host cold starts
 });
 
 // Request Interceptor - Attach JWT Bearer Token
@@ -78,7 +78,7 @@ api.interceptors.response.use(
       }
     } else if (error.request) {
       title = 'Connection Refused';
-      message = 'Unable to connect to the backend server at http://localhost:8080. Please verify Spring Boot is running.';
+      message = `Unable to connect to backend server at ${API_BASE_URL}. Please verify backend service is running.`;
     }
 
     console.error(`[API Error ${error.response?.status || ''}] ${title}:`, message);
