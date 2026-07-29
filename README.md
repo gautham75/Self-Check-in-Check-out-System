@@ -54,35 +54,92 @@ The platform provides role-based features:
 
 ## 🖼️ Project Showcase
 
-### 📱 Responsive Mobile Dashboard View
-<div align="center">
-  <img src="screenshots/dashboard_mobile.png" alt="EventSync Mobile View" width="340" style="border-radius: 18px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15); margin: 20px 0; border: 4px solid #fff;" />
-</div>
+### 🖥️ Desktop Web Interface
 
-<br/>
+<table>
+  <tr>
+    <th align="center">📊 Bento Dashboard</th>
+    <th align="center">👥 Participants Directory</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/dashboard_desktop.png" alt="Blynk Web UI Dashboard" width="450"/></td>
+    <td align="center"><img src="screenshots/participants_directory.png" alt="Blynk Web UI Dashboard" width="450"/></td>
+  </tr>
+  <tr>
+    <th align="center" colspan="2">⚙️ System Configuration & Health</th>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><img src="screenshots/system_health.png" alt="Blynk Web UI Dashboard" width="700"/></td>
+  </tr>
+</table>
+
+### 📱 Responsive Mobile View
+
+<div align="center">
+  <img src="screenshots/dashboard_mobile.png" alt="EventSync Mobile View" width="280" style="border-radius: 18px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15); margin: 20px 0; border: 4px solid #fff;" />
+</div>
 
 ---
 
-## 🧩 System Architecture
+## 📐 System Diagrams
 
+### 🏗️ High-Level System Architecture
+
+```mermaid
+graph TD
+    %% Define Nodes
+    ClientDesktop[Vite + React Client<br>Desktop Portal]
+    ClientMobile[Vite + React Client<br>Mobile Web App]
+    BackendAPI[Spring Boot API Server<br>JWT & Route Controller]
+    SupabaseDB[(Supabase DB<br>PostgreSQL)]
+    AWSS3Bucket[AWS S3 Bucket<br>PDFs & QRs]
+    SMTPServer[JavaMailSender<br>SMTP Server]
+
+    %% Define connections
+    ClientDesktop -->|HTTPS API Requests| BackendAPI
+    ClientMobile -->|HTTPS API Requests| BackendAPI
+    BackendAPI -->|Data Sync / Queries| SupabaseDB
+    BackendAPI -->|File Storage / Fetch| AWSS3Bucket
+    BackendAPI -->|Certificate Dispatch| SMTPServer
+
+    %% Styling
+    style ClientDesktop fill:#212227,stroke:#FFD036,stroke-width:2px,color:#fff
+    style ClientMobile fill:#212227,stroke:#FFD036,stroke-width:2px,color:#fff
+    style BackendAPI fill:#FFD036,stroke:#212227,stroke-width:2px,color:#212227
+    style SupabaseDB fill:#4169E1,stroke:#fff,stroke-width:1px,color:#fff
+    style AWSS3Bucket fill:#FF9900,stroke:#fff,stroke-width:1px,color:#fff
+    style SMTPServer fill:#23C244,stroke:#fff,stroke-width:1px,color:#fff
 ```
-                 ┌──────────────────────────────────────┐
-                 │          Vite + React App            │
-                 │      (Desktop & Mobile Clients)      │
-                 └──────────┬─────────────────▲─────────┘
-                            │ API Calls       │ Callback Events
-                            ▼                 │
-                 ┌──────────────────────────────────────┐
-                 │       Spring Boot REST API           │
-                 │  (JWT Security & Controller Engine)  │
-                 └──────────┬──────────┬──────────┬─────┘
-                            │          │          │
-         ┌──────────────────┘          │          └──────────────────┐
-         ▼                             ▼                             ▼
-  ┌──────────────┐              ┌──────────────┐              ┌──────────────┐
-  │  Supabase    │              │    AWS S3    │              │  SMTP Server │
-  │ (PostgresDB) │              │ (Storage)    │              │   (Mailing)  │
-  └──────────────┘              └──────────────┘              └──────────────┘
+
+### 🔀 Event Lifecycle & Ticket Validation Flowchart
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Participant as Participant
+    actor Staff as Event Staff / Operator
+    participant Sys as EventSync System
+    participant DB as Supabase PostgreSQL
+    participant S3 as AWS S3 Storage
+    participant Mail as SMTP Mailer
+
+    Participant->>Sys: Registers for Event
+    Sys->>DB: Save Participant Record
+    Sys->>S3: Generate & Upload QR Code Image
+    Sys->>Mail: Send Registration Email with Ticket QR
+    Mail-->>Participant: Receives Ticket Email
+    
+    Note over Participant, Staff: On Event Day
+    Participant->>Staff: Shows Ticket QR code
+    Staff->>Sys: Scans QR code via Scanner Page
+    Sys->>DB: Update Status to "Checked-In"
+    Sys-->>Staff: Display Success Check-in Alert
+    
+    Note over Participant, Sys: Event Concludes
+    Sys->>DB: Verify check-in logs
+    Sys->>S3: Generate Certificate PDF & Upload
+    Sys->>Mail: Email dynamic Certificate PDF
+    Mail-->>Participant: Receives Certificate
 ```
 
 ---
@@ -170,23 +227,6 @@ The platform provides role-based features:
    npm run dev
    ```
 4. Access the web app in your browser at `http://localhost:5173`.
-
----
-
-## ⚙️ How It Works (Event Lifecycle Flow)
-
-```
-[User Registers] ──► [System Creates QR] ──► [Sends Ticket PDF via Email]
-                                                     │
-                                                     ▼
-[Attendee Arrives] ◄── [Staff Scans QR] ◄── [Displays Ticket at Gate]
-        │
-        ▼
-[Check-In Logged] ──► [On-Site Timers Start] ──► [Active Dashboard Updates]
-        │
-        ▼
-[Event Concludes] ──► [System Auto-Generates Certificate] ──► [Emailed via SMTP]
-```
 
 ---
 
