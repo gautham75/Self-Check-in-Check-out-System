@@ -42,3 +42,13 @@ export const formatDuration = (minutes) => {
   }
   return `${mins}m`;
 };
+
+export const resolveApiUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://localhost:8080/api')) {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+    return url.replace('http://localhost:8080/api', apiBase);
+  }
+  return url;
+};
+

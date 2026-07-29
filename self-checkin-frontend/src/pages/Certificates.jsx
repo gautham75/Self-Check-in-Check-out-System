@@ -14,6 +14,7 @@ import {
   FaFilePdf
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import { resolveApiUrl } from '../utils/formatters';
 
 const Certificates = () => {
   const [participantId, setParticipantId] = useState('');
@@ -56,7 +57,7 @@ const Certificates = () => {
       const resultObj = {
         participantId: pId,
         message: msg,
-        certificateUrl: certUrl,
+        certificateUrl: resolveApiUrl(certUrl),
         generatedAt: new Date().toISOString()
       };
 
@@ -66,7 +67,7 @@ const Certificates = () => {
         icon: 'success',
         title: 'Certificate Issued!',
         html: `PDF generated, uploaded to AWS S3, and emailed.<br/><br/>
-               <a href="${certUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary mt-2">
+               <a href="${resultObj.certificateUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary mt-2">
                  Open Certificate PDF
                </a>`,
         showConfirmButton: true,
@@ -310,8 +311,8 @@ const Certificates = () => {
                       </td>
                       <td>
                         {hasCert ? (
-                          <a href={p.certificateUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-truncate d-inline-block" style={{ maxWidth: '200px', fontSize: '0.825rem' }}>
-                            {p.certificateUrl}
+                          <a href={resolveApiUrl(p.certificateUrl)} target="_blank" rel="noopener noreferrer" className="text-primary text-truncate d-inline-block" style={{ maxWidth: '200px', fontSize: '0.825rem' }}>
+                            {resolveApiUrl(p.certificateUrl)}
                           </a>
                         ) : (
                           <span className="text-muted" style={{ fontSize: '0.8rem' }}>Not Generated</span>
@@ -320,7 +321,7 @@ const Certificates = () => {
                       <td className="text-end">
                         {hasCert ? (
                           <a
-                            href={p.certificateUrl}
+                            href={resolveApiUrl(p.certificateUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-sm btn-outline-success rounded-md d-inline-flex align-items-center gap-1"

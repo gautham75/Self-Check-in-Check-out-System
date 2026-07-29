@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import participantService from '../services/participantService';
 import eventService from '../services/eventService';
 import { notifyDataChanged, useDataSyncListener } from '../utils/dataSyncUtil';
-import { formatDateTime, formatDuration } from '../utils/formatters';
+import { formatDateTime, formatDuration, resolveApiUrl } from '../utils/formatters';
 import {
   FaUserPlus,
   FaSearch,
@@ -219,7 +219,7 @@ const Participants = () => {
     }
     Swal.fire({
       title: `QR Code: ${name}`,
-      imageUrl: qrUrl,
+      imageUrl: resolveApiUrl(qrUrl),
       imageWidth: 220,
       imageHeight: 220,
       imageAlt: 'Participant QR Code',
