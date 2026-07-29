@@ -1,6 +1,11 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=200&section=header&text=📅%20EventSync%20Platform&fontSize=38&fontColor=fff&animation=fadeIn&fontAlignY=35&desc=Self%20Check-in%20%7C%20Check-out%20%7C%20Certificate%20Generation&descAlignY=58&descSize=17" alt="EventSync Platform" width="100%"/>
+<img src="screenshots/eventsync_icon.svg" alt="EventSync Logo" width="120" />
+
+<br/>
+<br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=212227,2E2F36,FFD036&height=200&section=header&text=EventSync%20Platform&fontSize=38&fontColor=FFD036&animation=fadeIn&fontAlignY=35&desc=Self%20Check-in%20%7C%20Check-out%20%7C%20Certificate%20Generation&descAlignY=58&descSize=17" alt="EventSync Platform" width="100%"/>
 
 <br/>
 
