@@ -12,7 +12,7 @@ import {
   FaCog
 } from 'react-icons/fa';
 
-const Sidebar = ({ collapsed, toggleSidebar }) => {
+const Sidebar = ({ collapsed, mobileOpen, setMobileOpen }) => {
   const { role } = useAuth();
 
   const menuItems = [
@@ -27,10 +27,20 @@ const Sidebar = ({ collapsed, toggleSidebar }) => {
 
   const visibleItems = menuItems.filter((item) => !role || item.roles.includes(role));
 
+  const handleLinkClick = () => {
+    if (setMobileOpen) {
+      setMobileOpen(false);
+    }
+  };
+
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-header" style={{ height: collapsed ? '76px' : '90px', padding: collapsed ? '0 1.25rem' : '1rem 1.25rem' }}>
-        <NavLink to="/dashboard" className="sidebar-logo text-decoration-none">
+        <NavLink 
+          to="/dashboard" 
+          className="sidebar-logo text-decoration-none"
+          onClick={handleLinkClick}
+        >
           <div className="sidebar-logo-icon">
             <img src={eventsyncIcon} alt="EventSync Logo" style={{ width: '38px', height: '38px' }} />
           </div>
@@ -57,6 +67,7 @@ const Sidebar = ({ collapsed, toggleSidebar }) => {
                 `sidebar-link ${isActive ? 'active' : ''}`
               }
               title={collapsed ? item.label : ''}
+              onClick={handleLinkClick}
             >
               <span className="sidebar-link-icon">{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}

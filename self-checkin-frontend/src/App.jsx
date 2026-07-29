@@ -33,14 +33,40 @@ const PageLoadingFallback = () => (
 
 function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const toggleSidebar = () => {
     setSidebarCollapsed((prev) => !prev);
+    setMobileOpen((prev) => !prev);
   };
 
   return (
     <div className="app-wrapper">
-      <Sidebar collapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />
+      <Sidebar 
+        collapsed={sidebarCollapsed} 
+        mobileOpen={mobileOpen} 
+        setMobileOpen={setMobileOpen} 
+      />
+      
+      {mobileOpen && (
+        <div 
+          className="sidebar-overlay" 
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            zIndex: 1035,
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            transition: 'opacity 0.3s ease'
+          }}
+        />
+      )}
+
       <div className={`main-container ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <Navbar toggleSidebar={toggleSidebar} />
         <main className="content-body">
