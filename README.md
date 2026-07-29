@@ -116,30 +116,30 @@ graph TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Participant as Participant
+    actor User as Participant
     actor Staff as Event Staff / Operator
     participant Sys as EventSync System
     participant DB as Supabase PostgreSQL
     participant S3 as AWS S3 Storage
     participant Mail as SMTP Mailer
 
-    Participant->>Sys: Registers for Event
+    User->>Sys: Registers for Event
     Sys->>DB: Save Participant Record
     Sys->>S3: Generate & Upload QR Code Image
     Sys->>Mail: Send Registration Email with Ticket QR
-    Mail-->>Participant: Receives Ticket Email
+    Mail-->>User: Receives Ticket Email
     
-    Note over Participant, Staff: On Event Day
-    Participant->>Staff: Shows Ticket QR code
+    Note over User, Staff: On Event Day
+    User->>Staff: Shows Ticket QR code
     Staff->>Sys: Scans QR code via Scanner Page
     Sys->>DB: Update Status to "Checked-In"
     Sys-->>Staff: Display Success Check-in Alert
     
-    Note over Participant, Sys: Event Concludes
+    Note over User, Sys: Event Concludes
     Sys->>DB: Verify check-in logs
     Sys->>S3: Generate Certificate PDF & Upload
     Sys->>Mail: Email dynamic Certificate PDF
-    Mail-->>Participant: Receives Certificate
+    Mail-->>User: Receives Certificate
 ```
 
 ---
