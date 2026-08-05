@@ -17,6 +17,9 @@ public class CertificateService {
     private final S3Service s3Service;
     private final EmailService emailService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     public CertificateService(
             ParticipantRepository participantRepository,
             S3Service s3Service,
@@ -67,7 +70,9 @@ public class CertificateService {
             }
 
             // 6. Direct backend view URL guarantees 100% successful opening without AWS S3 AccessDenied errors
-            String certificateUrl = "http://localhost:8080/api/certificate/view/" + participant.getId();
+            String base = (backendUrl != null && !backendUrl.isBlank()) ? backendUrl.trim() : "http://localhost:8080";
+            if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+            String certificateUrl = base + "/api/certificate/view/" + participant.getId();
 
             // 7. Save certificateUrl into PostgreSQL
             participant.setCertificateUrl(certificateUrl);

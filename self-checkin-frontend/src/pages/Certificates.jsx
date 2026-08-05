@@ -217,10 +217,10 @@ const Certificates = () => {
                     </label>
                     <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 bg-white p-2.5 rounded-3 border">
                       <span className="text-truncate text-primary fw-medium" style={{ fontSize: '0.85rem' }}>
-                        {issuedCert.certificateUrl}
+                        {resolveApiUrl(issuedCert.certificateUrl)}
                       </span>
                       <a
-                        href={issuedCert.certificateUrl}
+                        href={resolveApiUrl(issuedCert.certificateUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-sm btn-primary fw-semibold d-inline-flex align-items-center gap-1 text-nowrap"

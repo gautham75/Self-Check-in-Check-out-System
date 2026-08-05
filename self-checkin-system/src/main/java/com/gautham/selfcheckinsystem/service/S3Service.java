@@ -16,6 +16,9 @@ public class S3Service {
     @Value("${aws.bucket-name:selfcheckin-storage}")
     private String bucketName;
 
+    @Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     public S3Service(S3Client s3Client) {
         this.s3Client = s3Client;
     }
@@ -39,10 +42,13 @@ public class S3Service {
             System.err.println("S3Service Notice: AWS S3 upload failed (" + e.getMessage() + "). Falling back to local file URL.");
         }
 
+        String base = (backendUrl != null && !backendUrl.isBlank()) ? backendUrl.trim() : "http://localhost:8080";
+        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+
         if (key.startsWith("participant_")) {
             String idStr = key.replace("participant_", "").replace(".png", "");
-            return "http://localhost:8080/api/participants/qrcode/" + idStr;
+            return base + "/api/participants/qrcode/" + idStr;
         }
-        return "http://localhost:8080/api/certificate/view/" + key.replace("certificate_", "").replace(".pdf", "");
+        return base + "/api/certificate/view/" + key.replace("certificate_", "").replace(".pdf", "");
     }
 }

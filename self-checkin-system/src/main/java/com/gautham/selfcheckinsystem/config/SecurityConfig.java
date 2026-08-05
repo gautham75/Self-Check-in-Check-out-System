@@ -62,8 +62,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/otp/**").permitAll()
+                .requestMatchers("/api/participants/dynamic-pass/**", "/api/participants/dynamic-qr/**", "/api/participants/qrcode/**").permitAll()
                 .requestMatchers("/api/certificate/view/**", "/api/certificate/download/**").permitAll()
-                .requestMatchers("/api/participants/qrcode/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Role based authorization for CRUD operations
                 .requestMatchers("/api/events/**").hasAnyRole("ADMIN", "STAFF")
@@ -87,10 +88,11 @@ public class SecurityConfig {
                 .filter(s -> !s.isEmpty())
                 .toList();
 
-        configuration.setAllowedOrigins(origins.isEmpty() ? List.of("*") : origins);
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
