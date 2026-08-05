@@ -61,6 +61,62 @@ const QRScanner = () => {
     };
   }, [cameraActive]);
 
+  const promptCheckInOtp = async (participantId, attendeeName) => {
+    let currentOtpRes = await api.post(`/participants/send-checkin-otp/${participantId}`);
+
+    while (true) {
+      const attendeeEmail = currentOtpRes.data.email || 'attendee email';
+      const debugCode = currentOtpRes.data.debugOtpCode;
+
+      const result = await Swal.fire({
+        title: '🔐 Attendee Identity OTP Verification',
+        html: `A 6-digit Check-In OTP has been dispatched to <strong>${attendeeEmail}</strong>.<br/>
+               ${debugCode ? `<div class="mt-2 p-2 bg-warning bg-opacity-10 rounded text-dark font-monospace" style="font-size:0.8rem; border: 1px dashed #D97706;">Current OTP PIN: <strong>${debugCode}</strong></div>` : ''}<br/>
+               Ask <strong>${attendeeName || 'Attendee'}</strong> for their 6-digit PIN to complete entry:`,
+        input: 'text',
+        inputPlaceholder: 'Enter 6-digit OTP (e.g. 482910)',
+        inputAttributes: {
+          maxLength: 6,
+          style: 'text-align: center; font-size: 1.5rem; letter-spacing: 4px; font-family: monospace;'
+        },
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: 'Verify & Issue Certificate',
+        denyButtonText: '🔄 Resend New OTP',
+        confirmButtonColor: '#212227',
+        denyButtonColor: '#D97706',
+        cancelButtonColor: '#6B7280',
+        allowOutsideClick: false,
+        inputValidator: (val) => {
+          if (!val || val.trim().length !== 6) {
+            return 'Please enter a valid 6-digit OTP PIN.';
+          }
+        }
+      });
+
+      if (result.isDenied) {
+        // Staff clicked "Resend New OTP" -> generate a DIFFERENT fresh OTP code
+        currentOtpRes = await api.post(`/participants/send-checkin-otp/${participantId}`);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'info',
+          title: 'Fresh OTP Dispatched!',
+          text: `A new 6-digit code has been emailed to ${attendeeEmail}`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+        continue;
+      }
+
+      if (result.isConfirmed && result.value) {
+        return result.value.trim();
+      }
+
+      return null;
+    }
+  };
+
   const executeProcessQuery = async (queryStr) => {
     const query = (queryStr || qrCodeInput).trim();
     if (!query) {
@@ -95,34 +151,8 @@ const QRScanner = () => {
         return;
       }
 
-      // 2. Dispatch 6-digit Check-In OTP to participant's email
-      const otpRes = await api.post(`/participants/send-checkin-otp/${targetId}`);
-      const attendeeName = otpRes.data.fullName || 'Attendee';
-      const attendeeEmail = otpRes.data.email || 'attendee email';
-
-      // 3. Prompt Staff for 6-Digit OTP received on attendee phone
-      const { value: otpCode } = await Swal.fire({
-        title: '🔐 Attendee Identity OTP Verification',
-        html: `A 6-digit Check-In OTP has been dispatched to <strong>${attendeeEmail}</strong>.<br/><br/>
-               Ask <strong>${attendeeName}</strong> for their 6-digit PIN to complete entry:`,
-        input: 'text',
-        inputPlaceholder: 'Enter 6-digit OTP (e.g. 482910)',
-        inputAttributes: {
-          maxLength: 6,
-          style: 'text-align: center; font-size: 1.5rem; letter-spacing: 4px; font-family: monospace;'
-        },
-        showCancelButton: true,
-        confirmButtonText: 'Verify & Issue Certificate',
-        confirmButtonColor: '#212227',
-        cancelButtonColor: '#6B7280',
-        allowOutsideClick: false,
-        inputValidator: (val) => {
-          if (!val || val.trim().length !== 6) {
-            return 'Please enter a valid 6-digit OTP PIN.';
-          }
-        }
-      });
-
+      // 2. Prompt for 6-Digit Check-In OTP with Resend support
+      const otpCode = await promptCheckInOtp(targetId, 'Attendee');
       if (!otpCode) {
         setScanning(false);
         return;

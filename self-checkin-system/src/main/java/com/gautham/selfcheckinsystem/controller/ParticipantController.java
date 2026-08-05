@@ -109,7 +109,8 @@ public class ParticipantController {
 
     @PostMapping("/send-checkin-otp/{id}")
     public ResponseEntity<Map<String, Object>> sendCheckInOtp(@PathVariable Long id) {
-        Participant participant = participantService.sendCheckInOtp(id);
+        Participant participant = participantService.getParticipantById(id);
+        String otpCode = participantService.sendCheckInOtp(id);
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Check-In OTP sent to attendee email.");
@@ -117,6 +118,7 @@ public class ParticipantController {
         response.put("fullName", participant.getFullName());
         response.put("email", participant.getEmail());
         response.put("phone", participant.getPhone());
+        response.put("debugOtpCode", otpCode);
         return ResponseEntity.ok(response);
     }
 

@@ -247,17 +247,18 @@ const Participants = () => {
     });
   };
 
-  const handleCheckIn = async (id, name) => {
-    try {
-      // 1. Dispatch Check-In OTP to attendee's email
-      const otpRes = await api.post(`/participants/send-checkin-otp/${id}`);
-      const attendeeEmail = otpRes.data.email || 'attendee email';
+  const promptCheckInOtp = async (participantId, participantName) => {
+    let currentOtpRes = await api.post(`/participants/send-checkin-otp/${participantId}`);
 
-      // 2. Prompt for 6-Digit OTP received on attendee phone/email
-      const { value: otpCode } = await Swal.fire({
+    while (true) {
+      const attendeeEmail = currentOtpRes.data.email || 'attendee email';
+      const debugCode = currentOtpRes.data.debugOtpCode;
+
+      const result = await Swal.fire({
         title: '🔐 Check-In Identity OTP',
-        html: `A 6-digit Check-In OTP code has been emailed to <strong>${attendeeEmail}</strong>.<br/><br/>
-               Enter the 6-digit PIN to complete entry for <strong>${name || 'Participant'}</strong>:`,
+        html: `A 6-digit Check-In OTP code has been emailed to <strong>${attendeeEmail}</strong>.<br/>
+               ${debugCode ? `<div class="mt-2 p-2 bg-warning bg-opacity-10 rounded text-dark font-monospace" style="font-size:0.8rem; border: 1px dashed #D97706;">Current OTP PIN: <strong>${debugCode}</strong></div>` : ''}<br/>
+               Enter the 6-digit PIN to complete entry for <strong>${participantName || 'Participant'}</strong>:`,
         input: 'text',
         inputPlaceholder: 'Enter 6-digit OTP (e.g. 482910)',
         inputAttributes: {
@@ -265,8 +266,11 @@ const Participants = () => {
           style: 'text-align: center; font-size: 1.5rem; letter-spacing: 4px; font-family: monospace;'
         },
         showCancelButton: true,
+        showDenyButton: true,
         confirmButtonText: 'Verify & Issue Certificate',
+        denyButtonText: '🔄 Resend New OTP',
         confirmButtonColor: '#212227',
+        denyButtonColor: '#D97706',
         cancelButtonColor: '#6B7280',
         allowOutsideClick: false,
         inputValidator: (val) => {
@@ -276,12 +280,38 @@ const Participants = () => {
         }
       });
 
+      if (result.isDenied) {
+        // Staff clicked "Resend New OTP" -> generate a DIFFERENT fresh OTP code
+        currentOtpRes = await api.post(`/participants/send-checkin-otp/${participantId}`);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'info',
+          title: 'Fresh OTP Dispatched!',
+          text: `A new 6-digit code has been emailed to ${attendeeEmail}`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+        continue;
+      }
+
+      if (result.isConfirmed && result.value) {
+        return result.value.trim();
+      }
+
+      return null;
+    }
+  };
+
+  const handleCheckIn = async (id, name) => {
+    try {
+      const otpCode = await promptCheckInOtp(id, name);
       if (!otpCode) return;
 
-      // 3. Verify OTP & Issue Certificate
+      // Verify OTP & Issue Certificate
       const verifyRes = await api.post('/participants/checkin-with-otp', {
         participantId: id,
-        otpCode: otpCode.trim()
+        otpCode: otpCode
       });
 
       const certLink = verifyRes.data.certificateUrl;

@@ -361,12 +361,11 @@ public class ParticipantService {
         return participantRepository.findByEmailContainingIgnoreCase(email);
     }
 
-    public Participant sendCheckInOtp(Long id) {
+    public String sendCheckInOtp(Long id) {
         Participant participant = participantRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Participant not found with ID: " + id));
 
-        otpService.sendCheckInOtpForParticipant(participant);
-        return participant;
+        return otpService.sendCheckInOtpForParticipant(participant);
     }
 
     @org.springframework.transaction.annotation.Transactional
