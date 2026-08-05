@@ -3,6 +3,7 @@ import participantService from '../services/participantService';
 import eventService from '../services/eventService';
 import { notifyDataChanged, useDataSyncListener } from '../utils/dataSyncUtil';
 import { formatDateTime, formatDuration, resolveApiUrl } from '../utils/formatters';
+import api from '../services/api';
 import {
   FaUserPlus,
   FaSearch,
@@ -14,7 +15,10 @@ import {
   FaSync,
   FaSave,
   FaBuilding,
-  FaGraduationCap
+  FaGraduationCap,
+  FaShieldAlt,
+  FaCheckCircle,
+  FaPaperPlane
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
@@ -29,6 +33,14 @@ const Participants = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // OTP State
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpCodeInput, setOtpCodeInput] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
 
   const initialForm = {
     fullName: '',
@@ -78,6 +90,65 @@ const Participants = () => {
     });
   };
 
+  // OTP Resend Countdown Effect
+  useEffect(() => {
+    let timer;
+    if (otpCountdown > 0) {
+      timer = setInterval(() => setOtpCountdown((prev) => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [otpCountdown]);
+
+  const handleSendOtp = async () => {
+    if (!formData.email || !formData.email.includes('@')) {
+      Swal.fire('Valid Email Required', 'Please enter a valid email address first.', 'warning');
+      return;
+    }
+    setOtpSending(true);
+    try {
+      await api.post('/otp/send', {
+        email: formData.email,
+        name: formData.fullName || 'Registrant'
+      });
+      setOtpSent(true);
+      setOtpCountdown(60);
+      Swal.fire({
+        icon: 'success',
+        title: 'OTP Sent!',
+        text: `A 6-digit verification OTP code has been emailed to ${formData.email}.`,
+        timer: 3000
+      });
+    } catch (err) {
+      console.error('Failed to send OTP:', err);
+      Swal.fire('OTP Dispatch Failed', err.response?.data?.message || 'Could not dispatch OTP email.', 'error');
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCodeInput || otpCodeInput.trim().length !== 6) {
+      Swal.fire('6-Digit OTP Required', 'Please enter the 6-digit verification code received in your email.', 'warning');
+      return;
+    }
+    setOtpVerifying(true);
+    try {
+      const res = await api.post('/otp/verify', {
+        email: formData.email,
+        code: otpCodeInput.trim()
+      });
+      if (res.data.verified) {
+        setOtpVerified(true);
+        Swal.fire('Email Verified!', 'Your email identity has been verified successfully.', 'success');
+      }
+    } catch (err) {
+      console.error('OTP Verification Error:', err);
+      Swal.fire('Verification Failed', err.response?.data?.message || 'Invalid or expired OTP code.', 'error');
+    } finally {
+      setOtpVerifying(false);
+    }
+  };
+
   const handleOpenCreateModal = () => {
     setIsEditing(false);
     setSelectedId(null);
@@ -116,6 +187,17 @@ const Participants = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isEditing && !otpVerified) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'OTP Verification Required',
+        text: 'Please verify your email address by clicking "Send OTP" and entering the 6-digit PIN before completing registration.',
+        confirmButtonColor: '#212227'
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     const payload = {
@@ -454,18 +536,75 @@ const Participants = () => {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '0.875rem' }}>
-                        Email Address <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        className="form-control"
-                        placeholder="john.doe@example.com"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                      />
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <label className="form-label fw-semibold text-dark mb-0" style={{ fontSize: '0.875rem' }}>
+                          Email Address <span className="text-danger">*</span>
+                        </label>
+                        {otpVerified ? (
+                          <span className="badge bg-success bg-opacity-10 text-success d-flex align-items-center gap-1 font-monospace">
+                            <FaCheckCircle /> VERIFIED
+                          </span>
+                        ) : (
+                          <span className="badge bg-warning bg-opacity-10 text-warning d-flex align-items-center gap-1 font-monospace">
+                            <FaShieldAlt /> OTP REQUIRED
+                          </span>
+                        )}
+                      </div>
+                      <div className="input-group">
+                        <input
+                          type="email"
+                          name="email"
+                          className={`form-control ${otpVerified ? 'is-valid' : ''}`}
+                          placeholder="john.doe@example.com"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          disabled={otpVerified || isEditing}
+                          required
+                        />
+                        {!otpVerified && !isEditing && (
+                          <button
+                            type="button"
+                            className="btn btn-outline-dark d-flex align-items-center gap-1"
+                            onClick={handleSendOtp}
+                            disabled={otpSending || !formData.email || otpCountdown > 0}
+                          >
+                            {otpSending ? (
+                              <span className="spinner-border spinner-border-sm" />
+                            ) : (
+                              <>
+                                <FaPaperPlane /> {otpCountdown > 0 ? `${otpCountdown}s` : 'Send OTP'}
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* 6-Digit OTP Verification Box */}
+                      {otpSent && !otpVerified && !isEditing && (
+                        <div className="mt-2.5 p-2.5 rounded bg-light border border-warning">
+                          <label className="form-label fw-semibold text-dark mb-1" style={{ fontSize: '0.78rem' }}>
+                            Enter 6-Digit Email OTP:
+                          </label>
+                          <div className="input-group input-group-sm">
+                            <input
+                              type="text"
+                              maxLength={6}
+                              className="form-control text-center font-monospace fw-bold fs-6"
+                              placeholder="e.g. 482910"
+                              value={otpCodeInput}
+                              onChange={(e) => setOtpCodeInput(e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-warning fw-bold px-3"
+                              onClick={handleVerifyOtp}
+                              disabled={otpVerifying || otpCodeInput.length !== 6}
+                            >
+                              {otpVerifying ? <span className="spinner-border spinner-border-sm" /> : 'Verify OTP'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-12 col-md-4">

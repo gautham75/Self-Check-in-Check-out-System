@@ -94,6 +94,72 @@ public class EmailService {
     }
 
     @org.springframework.scheduling.annotation.Async
+    public void sendOtpEmail(String toEmail, String name, String otpCode) {
+        if (mailSender == null) {
+            System.out.println("EmailService: JavaMailSender is not configured. OTP Code for " + toEmail + ": " + otpCode);
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "noreply@eventsync.com";
+            try {
+                helper.setFrom(sender, "EventSync Verification");
+            } catch (Exception ex) {
+                helper.setFrom(sender);
+            }
+            helper.setTo(toEmail);
+            helper.setSubject(otpCode + " is your EventSync Verification Code");
+
+            String htmlBody = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F5F3ED; margin: 0; padding: 20px; color: #212227; }
+                        .email-container { max-width: 500px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #E5E7EB; }
+                        .email-header { background-color: #212227; padding: 24px; text-align: center; border-bottom: 4px solid #FFD036; }
+                        .logo-badge { display: inline-block; background: #FFD036; color: #212227; font-weight: 800; font-size: 13px; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 6px; }
+                        .header-title { color: #FFFFFF; font-size: 20px; font-weight: 700; margin: 0; }
+                        .email-body { padding: 32px 24px; text-align: center; }
+                        .welcome-text { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+                        .otp-box { background-color: #F8FAFC; border: 2px dashed #FFD036; border-radius: 12px; padding: 18px; margin: 24px 0; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #212227; font-family: monospace; }
+                        .content-text { font-size: 13px; line-height: 1.5; color: #6B7280; margin-bottom: 12px; }
+                        .email-footer { background-color: #F9FAFB; padding: 16px; text-align: center; font-size: 11px; color: #9CA3AF; border-top: 1px solid #F3F4F6; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="email-header">
+                            <div class="logo-badge">EVENTSYNC SECURITY</div>
+                            <h1 class="header-title">Email Identity Verification</h1>
+                        </div>
+                        <div class="email-body">
+                            <div class="welcome-text">Hello %s,</div>
+                            <p class="content-text">Use the 6-digit OTP code below to verify your email address for EventSync registration. This code is valid for <strong>5 minutes</strong>.</p>
+                            <div class="otp-box">%s</div>
+                            <p class="content-text">If you did not request this code, please ignore this email.</p>
+                        </div>
+                        <div class="email-footer">
+                            &copy; 2026 EventSync Platform • Secure Event Attendance System
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """.formatted(name != null ? name : "User", otpCode);
+
+            helper.setText(htmlBody, true);
+            mailSender.send(message);
+            System.out.println("OTP email dispatched to: " + toEmail + " [OTP: " + otpCode + "]");
+        } catch (Exception e) {
+            System.err.println("EmailService Notice: Could not send OTP email to " + toEmail + ". Error: " + e.getMessage());
+        }
+    }
+
+    @org.springframework.scheduling.annotation.Async
     public void sendCertificateEmail(
             String toEmail,
             String participantName,
