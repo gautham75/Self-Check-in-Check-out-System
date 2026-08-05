@@ -33,6 +33,10 @@ public class EmailService {
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
+            message.setHeader("X-Priority", "1");
+            message.setHeader("Importance", "High");
+            message.setHeader("X-MSMail-Priority", "High");
+
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             String sender = fromEmail.trim();
@@ -41,6 +45,7 @@ public class EmailService {
             } catch (Exception ex) {
                 helper.setFrom(sender);
             }
+            helper.setReplyTo(sender);
             helper.setTo(toEmail);
             helper.setSubject("Registration Confirmed - EventSync Platform");
 
@@ -102,6 +107,10 @@ public class EmailService {
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
+            message.setHeader("X-Priority", "1");
+            message.setHeader("Importance", "High");
+            message.setHeader("X-MSMail-Priority", "High");
+
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "gmj.creation.77@gmail.com";
@@ -110,8 +119,9 @@ public class EmailService {
             } catch (Exception ex) {
                 helper.setFrom(sender);
             }
+            helper.setReplyTo(sender);
             helper.setTo(toEmail);
-            helper.setSubject("[EventSync] Check-In Verification Code: " + otpCode);
+            helper.setSubject("Your EventSync Check-In Verification Code: " + otpCode);
 
             String htmlBody = """
                 <!DOCTYPE html>
@@ -259,6 +269,10 @@ public class EmailService {
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
+            message.setHeader("X-Priority", "1");
+            message.setHeader("Importance", "High");
+            message.setHeader("X-MSMail-Priority", "High");
+
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             String sender = fromEmail.trim();
@@ -267,6 +281,7 @@ public class EmailService {
             } catch (Exception ex) {
                 helper.setFrom(sender);
             }
+            helper.setReplyTo(sender);
             helper.setTo(toEmail);
             helper.setSubject("Congratulations! Your Participation Certificate is Ready - EventSync");
 
