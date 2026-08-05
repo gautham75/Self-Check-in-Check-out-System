@@ -15,7 +15,6 @@ public class EmailService {
     @org.springframework.beans.factory.annotation.Value("${spring.mail.username:gmj.creation.77@gmail.com}")
     private String fromEmail;
 
-    @org.springframework.scheduling.annotation.Async
     public void sendRegistrationEmail(
             String toEmail,
             String participantName,
@@ -92,7 +91,6 @@ public class EmailService {
         }
     }
 
-    @org.springframework.scheduling.annotation.Async
     public void sendCheckInOtpEmail(String toEmail, String name, String eventName, String otpCode) {
         if (mailSender == null) {
             System.out.println("EmailService: JavaMailSender is not configured. Check-In OTP Code for " + toEmail + ": " + otpCode);
@@ -103,14 +101,14 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "noreply@eventsync.com";
+            String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "gmj.creation.77@gmail.com";
             try {
-                helper.setFrom(sender, "EventSync Check-In Desk");
+                helper.setFrom(sender, "EventSync Platform");
             } catch (Exception ex) {
                 helper.setFrom(sender);
             }
             helper.setTo(toEmail);
-            helper.setSubject(otpCode + " is your EventSync Check-In Verification Code");
+            helper.setSubject("[EventSync] Check-In Verification Code: " + otpCode);
 
             String htmlBody = """
                 <!DOCTYPE html>
@@ -160,7 +158,6 @@ public class EmailService {
         }
     }
 
-    @org.springframework.scheduling.annotation.Async
     public void sendOtpEmail(String toEmail, String name, String otpCode) {
         if (mailSender == null) {
             System.out.println("EmailService: JavaMailSender is not configured. OTP Code for " + toEmail + ": " + otpCode);
@@ -171,14 +168,14 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "noreply@eventsync.com";
+            String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "gmj.creation.77@gmail.com";
             try {
-                helper.setFrom(sender, "EventSync Verification");
+                helper.setFrom(sender, "EventSync Platform");
             } catch (Exception ex) {
                 helper.setFrom(sender);
             }
             helper.setTo(toEmail);
-            helper.setSubject(otpCode + " is your EventSync Verification Code");
+            helper.setSubject("[EventSync] Your Verification Code: " + otpCode);
 
             String htmlBody = """
                 <!DOCTYPE html>
@@ -226,7 +223,6 @@ public class EmailService {
         }
     }
 
-    @org.springframework.scheduling.annotation.Async
     public void sendCertificateEmail(
             String toEmail,
             String participantName,
@@ -235,7 +231,6 @@ public class EmailService {
         sendCertificateEmail(toEmail, participantName, eventName, certificateUrl, null);
     }
 
-    @org.springframework.scheduling.annotation.Async
     public void sendCertificateEmail(
             String toEmail,
             String participantName,
