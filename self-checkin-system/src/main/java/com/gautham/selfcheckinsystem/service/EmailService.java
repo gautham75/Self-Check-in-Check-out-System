@@ -94,6 +94,74 @@ public class EmailService {
     }
 
     @org.springframework.scheduling.annotation.Async
+    public void sendCheckInOtpEmail(String toEmail, String name, String eventName, String otpCode) {
+        if (mailSender == null) {
+            System.out.println("EmailService: JavaMailSender is not configured. Check-In OTP Code for " + toEmail + ": " + otpCode);
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "noreply@eventsync.com";
+            try {
+                helper.setFrom(sender, "EventSync Check-In Desk");
+            } catch (Exception ex) {
+                helper.setFrom(sender);
+            }
+            helper.setTo(toEmail);
+            helper.setSubject(otpCode + " is your EventSync Check-In Verification Code");
+
+            String htmlBody = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F5F3ED; margin: 0; padding: 20px; color: #212227; }
+                        .email-container { max-width: 500px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #E5E7EB; }
+                        .email-header { background-color: #212227; padding: 24px; text-align: center; border-bottom: 4px solid #FFD036; }
+                        .logo-badge { display: inline-block; background: #FFD036; color: #212227; font-weight: 800; font-size: 13px; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 6px; }
+                        .header-title { color: #FFFFFF; font-size: 20px; font-weight: 700; margin: 0; }
+                        .email-body { padding: 32px 24px; text-align: center; }
+                        .welcome-text { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+                        .event-name { font-size: 14px; font-weight: 600; color: #4B5563; margin-bottom: 16px; }
+                        .otp-box { background-color: #FEF3C7; border: 2px dashed #D97706; border-radius: 12px; padding: 18px; margin: 24px 0; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #92400E; font-family: monospace; }
+                        .content-text { font-size: 13px; line-height: 1.5; color: #6B7280; margin-bottom: 12px; }
+                        .email-footer { background-color: #F9FAFB; padding: 16px; text-align: center; font-size: 11px; color: #9CA3AF; border-top: 1px solid #F3F4F6; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="email-header">
+                            <div class="logo-badge">EVENT ENTRY VERIFICATION</div>
+                            <h1 class="header-title">Check-In Verification Code</h1>
+                        </div>
+                        <div class="email-body">
+                            <div class="welcome-text">Hello %s,</div>
+                            <div class="event-name">Event: %s</div>
+                            <p class="content-text">You are currently checking in at the venue terminal. Provide the 6-digit PIN below to the event staff to complete your check-in and issue your certificate:</p>
+                            <div class="otp-box">%s</div>
+                            <p class="content-text">This code is valid for <strong>5 minutes</strong>. If you are not currently at the venue, please report this immediately.</p>
+                        </div>
+                        <div class="email-footer">
+                            &copy; 2026 EventSync Platform • Official Check-In Desk System
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """.formatted(name != null ? name : "Attendee", eventName != null ? eventName : "EventSync Event", otpCode);
+
+            helper.setText(htmlBody, true);
+            mailSender.send(message);
+            System.out.println("Check-In OTP email dispatched to: " + toEmail + " [OTP: " + otpCode + "]");
+        } catch (Exception e) {
+            System.err.println("EmailService Notice: Could not send Check-In OTP email to " + toEmail + ". Error: " + e.getMessage());
+        }
+    }
+
+    @org.springframework.scheduling.annotation.Async
     public void sendOtpEmail(String toEmail, String name, String otpCode) {
         if (mailSender == null) {
             System.out.println("EmailService: JavaMailSender is not configured. OTP Code for " + toEmail + ": " + otpCode);

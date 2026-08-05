@@ -23,6 +23,8 @@ public class ParticipantService {
     private final EventRepository eventRepository;
     private final S3Service s3Service;
     private final EmailService emailService;
+    private final OtpService otpService;
+    private final CertificateService certificateService;
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -34,12 +36,16 @@ public class ParticipantService {
             ParticipantRepository participantRepository,
             EventRepository eventRepository,
             S3Service s3Service,
-            EmailService emailService) {
+            EmailService emailService,
+            OtpService otpService,
+            CertificateService certificateService) {
 
         this.participantRepository = participantRepository;
         this.eventRepository = eventRepository;
         this.s3Service = s3Service;
         this.emailService = emailService;
+        this.otpService = otpService;
+        this.certificateService = certificateService;
     }
 
     public List<Participant> getAllParticipants() {
@@ -353,5 +359,39 @@ public class ParticipantService {
 
     public List<Participant> searchByEmail(String email) {
         return participantRepository.findByEmailContainingIgnoreCase(email);
+    }
+
+    public Participant sendCheckInOtp(Long id) {
+        Participant participant = participantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found with ID: " + id));
+
+        otpService.sendCheckInOtpForParticipant(participant);
+        return participant;
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Participant checkInWithOtp(Long id, String otpCode) {
+        Participant participant = participantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found with ID: " + id));
+
+        boolean valid = otpService.verifyOtp(participant.getEmail(), otpCode);
+        if (!valid) {
+            throw new IllegalArgumentException("Invalid or expired 6-digit Check-In OTP code.");
+        }
+
+        participant.setCheckedIn(true);
+        participant.setCheckInTime(java.time.LocalDateTime.now());
+        participantRepository.save(participant);
+
+        // Automatically generate and issue Certificate PDF
+        try {
+            certificateService.generateCertificate(participant.getId());
+            // Refresh updated participant entity
+            participant = participantRepository.findById(id).orElse(participant);
+        } catch (Exception certEx) {
+            System.err.println("Notice: Certificate generation during OTP check-in warning: " + certEx.getMessage());
+        }
+
+        return participant;
     }
 }

@@ -1,8 +1,5 @@
-import React, { useState } from 'react';
-import scannerService from '../services/scannerService';
-import participantService from '../services/participantService';
-import { notifyDataChanged } from '../utils/dataSyncUtil';
-import { formatDateTime, formatDuration } from '../utils/formatters';
+import api from '../services/api';
+import { resolveApiUrl, formatDateTime, formatDuration } from '../utils/formatters';
 import {
   FaQrcode,
   FaCamera,
@@ -12,7 +9,9 @@ import {
   FaExclamationCircle,
   FaGraduationCap,
   FaBuilding,
-  FaBarcode
+  FaBarcode,
+  FaCertificate,
+  FaShieldAlt
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
@@ -32,8 +31,71 @@ const QRScanner = () => {
 
     setScanning(true);
     try {
-      // Process QR scan via scanner API (handles ID, Reg No, Email, or QR payload)
-      const pResult = await scannerService.scanQRCode(query);
+      // 1. Resolve participant details first
+      let targetId = null;
+      if (!isNaN(query)) {
+        targetId = Number(query);
+      } else {
+        try {
+          const parsed = JSON.parse(query);
+          if (parsed && parsed.id) targetId = parsed.id;
+        } catch (_) {}
+      }
+
+      if (!targetId) {
+        // Fallback search by registration number / name / email
+        const searchRes = await api.get('/participants/search', { params: { registrationNumber: query } });
+        if (searchRes.data && searchRes.data.length > 0) {
+          targetId = searchRes.data[0].id;
+        }
+      }
+
+      if (!targetId) {
+        Swal.fire('Participant Not Found', 'Could not find participant matching: ' + query, 'error');
+        setScanning(false);
+        return;
+      }
+
+      // 2. Dispatch 6-digit Check-In OTP to participant's email
+      const otpRes = await api.post(`/participants/send-checkin-otp/${targetId}`);
+      const attendeeName = otpRes.data.fullName || 'Attendee';
+      const attendeeEmail = otpRes.data.email || 'attendee email';
+
+      // 3. Prompt Staff for 6-Digit OTP received on attendee phone
+      const { value: otpCode } = await Swal.fire({
+        title: '🔐 Attendee Identity OTP Verification',
+        html: `A 6-digit Check-In OTP has been dispatched to <strong>${attendeeEmail}</strong>.<br/><br/>
+               Ask <strong>${attendeeName}</strong> for their 6-digit PIN to complete entry:`,
+        input: 'text',
+        inputPlaceholder: 'Enter 6-digit OTP (e.g. 482910)',
+        inputAttributes: {
+          maxLength: 6,
+          style: 'text-align: center; font-size: 1.5rem; letter-spacing: 4px; font-family: monospace;'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Verify & Issue Certificate',
+        confirmButtonColor: '#212227',
+        cancelButtonColor: '#6B7280',
+        allowOutsideClick: false,
+        inputValidator: (val) => {
+          if (!val || val.trim().length !== 6) {
+            return 'Please enter a valid 6-digit OTP PIN.';
+          }
+        }
+      });
+
+      if (!otpCode) {
+        setScanning(false);
+        return;
+      }
+
+      // 4. Verify Check-In with OTP & Generate Certificate
+      const verifyRes = await api.post('/participants/checkin-with-otp', {
+        participantId: targetId,
+        otpCode: otpCode.trim()
+      });
+
+      const pResult = verifyRes.data.participant || verifyRes.data;
 
       setLastScanParticipant(pResult);
       setScanHistory((prev) => [
@@ -41,47 +103,27 @@ const QRScanner = () => {
         ...prev.slice(0, 4)
       ]);
 
-      const name = pResult.fullName || pResult.name || 'Participant';
+      const certLink = verifyRes.data.certificateUrl || pResult.certificateUrl;
+
       Swal.fire({
         icon: 'success',
-        title: 'Check-In Successful!',
-        html: `Participant <strong>${name}</strong> has been checked in cleanly.`,
-        timer: 2000,
-        showConfirmButton: false
+        title: 'Check-In Verified!',
+        html: `Participant <strong>${pResult.fullName || attendeeName}</strong> has been checked in.<br/>
+               ${certLink ? `<a href="${resolveApiUrl(certLink)}" target="_blank" class="btn btn-sm btn-success mt-2">📜 View Certificate PDF</a>` : ''}`,
+        confirmButtonColor: '#212227'
       });
 
       setQrCodeInput('');
       notifyDataChanged();
     } catch (err) {
-      console.error('QR Scan error:', err);
-      const msg = err.response?.data?.message || err.message || 'Could not process QR Code or Participant ID.';
-
-      if (msg.includes('EXPIRED_QR_PASS') || msg.includes('expired')) {
-        Swal.fire({
-          icon: 'warning',
-          title: '🛑 EXPIRED QR PASS (SCREENSHOT DETECTED)',
-          html: `<div style="font-size:0.95rem; color:#991B1B;">
-            <strong>Anti-Proxy Security Notice:</strong><br/>
-            This QR code pass has expired. Screenshots and forwarded images are automatically rejected to prevent proxy check-in.<br/><br/>
-            <span className="text-muted">Please instruct the attendee to open their <strong>Live Mobile Pass</strong> on their phone screen.</span>
-          </div>`,
-          confirmButtonColor: '#DC2626'
-        });
-      } else if (msg.includes('INVALID_QR_PASS')) {
-        Swal.fire({
-          icon: 'error',
-          title: 'INVALID / TAMPERED SECURITY PASS',
-          text: 'The scanned security token is invalid or corrupted.',
-          confirmButtonColor: '#DC2626'
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Scan Processing Failed',
-          text: msg,
-          confirmButtonColor: '#2563eb'
-        });
-      }
+      console.error('QR Scan / OTP error:', err);
+      const msg = err.response?.data?.message || err.message || 'Could not process Check-In OTP.';
+      Swal.fire({
+        icon: 'error',
+        title: 'Check-In Failed',
+        text: msg,
+        confirmButtonColor: '#DC2626'
+      });
     } finally {
       setScanning(false);
     }

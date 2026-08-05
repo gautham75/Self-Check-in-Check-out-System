@@ -107,6 +107,33 @@ public class ParticipantController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/send-checkin-otp/{id}")
+    public ResponseEntity<Map<String, Object>> sendCheckInOtp(@PathVariable Long id) {
+        Participant participant = participantService.sendCheckInOtp(id);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Check-In OTP sent to attendee email.");
+        response.put("participantId", participant.getId());
+        response.put("fullName", participant.getFullName());
+        response.put("email", participant.getEmail());
+        response.put("phone", participant.getPhone());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/checkin-with-otp")
+    public ResponseEntity<Map<String, Object>> checkInWithOtp(@RequestBody Map<String, Object> request) {
+        Long participantId = Long.valueOf(request.get("participantId").toString());
+        String otpCode = request.get("otpCode").toString();
+
+        Participant participant = participantService.checkInWithOtp(participantId, otpCode);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Check-In Verified & Certificate Generated Successfully!");
+        response.put("participant", participant);
+        response.put("certificateUrl", participant.getCertificateUrl());
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<Participant>> searchParticipants(
             @RequestParam(required = false) String name,

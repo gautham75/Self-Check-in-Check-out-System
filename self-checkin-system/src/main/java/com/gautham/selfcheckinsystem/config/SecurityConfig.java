@@ -63,6 +63,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/otp/**").permitAll()
+                .requestMatchers("/api/participants/send-checkin-otp/**", "/api/participants/checkin-with-otp").permitAll()
                 .requestMatchers("/api/participants/dynamic-pass/**", "/api/participants/dynamic-qr/**", "/api/participants/qrcode/**").permitAll()
                 .requestMatchers("/api/certificate/view/**", "/api/certificate/download/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

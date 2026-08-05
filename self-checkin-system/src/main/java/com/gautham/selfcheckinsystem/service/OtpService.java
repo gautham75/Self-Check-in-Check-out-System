@@ -45,6 +45,26 @@ public class OtpService {
         return "OTP sent successfully to " + cleanEmail;
     }
 
+    @Transactional
+    public String sendCheckInOtpForParticipant(com.gautham.selfcheckinsystem.entity.Participant participant) {
+        if (participant == null || participant.getEmail() == null || participant.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Participant email is required for check-in OTP.");
+        }
+        String cleanEmail = participant.getEmail().trim().toLowerCase();
+        String name = participant.getFullName() != null ? participant.getFullName() : "Attendee";
+        String eventName = participant.getEvent() != null ? participant.getEvent().getEventName() : "EventSync Event";
+
+        int codeInt = 100000 + random.nextInt(900000);
+        String otpCode = String.valueOf(codeInt);
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(5);
+
+        OtpVerification verification = new OtpVerification(cleanEmail, otpCode, expiresAt);
+        otpRepository.save(verification);
+
+        emailService.sendCheckInOtpEmail(cleanEmail, name, eventName, otpCode);
+        return otpCode;
+    }
+
     public boolean verifyOtp(String email, String code) {
         if (email == null || code == null) return false;
         String cleanEmail = email.trim().toLowerCase();

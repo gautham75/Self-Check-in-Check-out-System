@@ -187,17 +187,6 @@ const Participants = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!isEditing && !otpVerified) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'OTP Verification Required',
-        text: 'Please verify your email address by clicking "Send OTP" and entering the 6-digit PIN before completing registration.',
-        confirmButtonColor: '#212227'
-      });
-      return;
-    }
-
     setSubmitting(true);
 
     const payload = {
@@ -536,75 +525,18 @@ const Participants = () => {
                     </div>
 
                     <div className="col-12 col-md-6">
-                      <div className="d-flex justify-content-between align-items-center mb-1">
-                        <label className="form-label fw-semibold text-dark mb-0" style={{ fontSize: '0.875rem' }}>
-                          Email Address <span className="text-danger">*</span>
-                        </label>
-                        {otpVerified ? (
-                          <span className="badge bg-success bg-opacity-10 text-success d-flex align-items-center gap-1 font-monospace">
-                            <FaCheckCircle /> VERIFIED
-                          </span>
-                        ) : (
-                          <span className="badge bg-warning bg-opacity-10 text-warning d-flex align-items-center gap-1 font-monospace">
-                            <FaShieldAlt /> OTP REQUIRED
-                          </span>
-                        )}
-                      </div>
-                      <div className="input-group">
-                        <input
-                          type="email"
-                          name="email"
-                          className={`form-control ${otpVerified ? 'is-valid' : ''}`}
-                          placeholder="john.doe@example.com"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          disabled={otpVerified || isEditing}
-                          required
-                        />
-                        {!otpVerified && !isEditing && (
-                          <button
-                            type="button"
-                            className="btn btn-outline-dark d-flex align-items-center gap-1"
-                            onClick={handleSendOtp}
-                            disabled={otpSending || !formData.email || otpCountdown > 0}
-                          >
-                            {otpSending ? (
-                              <span className="spinner-border spinner-border-sm" />
-                            ) : (
-                              <>
-                                <FaPaperPlane /> {otpCountdown > 0 ? `${otpCountdown}s` : 'Send OTP'}
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-
-                      {/* 6-Digit OTP Verification Box */}
-                      {otpSent && !otpVerified && !isEditing && (
-                        <div className="mt-2.5 p-2.5 rounded bg-light border border-warning">
-                          <label className="form-label fw-semibold text-dark mb-1" style={{ fontSize: '0.78rem' }}>
-                            Enter 6-Digit Email OTP:
-                          </label>
-                          <div className="input-group input-group-sm">
-                            <input
-                              type="text"
-                              maxLength={6}
-                              className="form-control text-center font-monospace fw-bold fs-6"
-                              placeholder="e.g. 482910"
-                              value={otpCodeInput}
-                              onChange={(e) => setOtpCodeInput(e.target.value)}
-                            />
-                            <button
-                              type="button"
-                              className="btn btn-warning fw-bold px-3"
-                              onClick={handleVerifyOtp}
-                              disabled={otpVerifying || otpCodeInput.length !== 6}
-                            >
-                              {otpVerifying ? <span className="spinner-border spinner-border-sm" /> : 'Verify OTP'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      <label className="form-label fw-semibold text-dark" style={{ fontSize: '0.875rem' }}>
+                        Email Address <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        className="form-control"
+                        placeholder="john.doe@example.com"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </div>
 
                     <div className="col-12 col-md-4">
