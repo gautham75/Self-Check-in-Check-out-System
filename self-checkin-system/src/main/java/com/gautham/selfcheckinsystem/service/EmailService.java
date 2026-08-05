@@ -27,8 +27,7 @@ public class EmailService {
         }
 
         if (fromEmail == null || fromEmail.isBlank()) {
-            System.out.println("EmailService Notice: spring.mail.username is not set in .env / properties. Skipping registration email dispatch.");
-            return;
+            fromEmail = "gmj.creation.77@gmail.com";
         }
 
         try {
@@ -250,8 +249,7 @@ public class EmailService {
         }
 
         if (fromEmail == null || fromEmail.isBlank()) {
-            System.out.println("EmailService Notice: spring.mail.username is not set in .env / properties. Skipping certificate email dispatch.");
-            return;
+            fromEmail = "gmj.creation.77@gmail.com";
         }
 
         try {

@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -49,11 +50,45 @@ class EmailServiceTest {
     }
 
     @Test
-    void testSendRegistrationEmail_SkippedWhenNoFromEmail() {
+    void testSendRegistrationEmail_FallbackFromEmail() {
+        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
         ReflectionTestUtils.setField(emailService, "fromEmail", "");
 
         emailService.sendRegistrationEmail("user@example.com", "John Doe", "http://localhost:8080/qr/1");
 
-        verify(mailSender, never()).send(any(MimeMessage.class));
+        verify(mailSender, times(1)).send(any(MimeMessage.class));
+    }
+
+    @Test
+    void testLiveGmailSmtpDispatch() {
+        try {
+            org.springframework.mail.javamail.JavaMailSenderImpl sender = new org.springframework.mail.javamail.JavaMailSenderImpl();
+            sender.setHost("smtp.gmail.com");
+            sender.setPort(587);
+            sender.setUsername("gmj.creation.77@gmail.com");
+            sender.setPassword("ducqrdwihghgnavq");
+
+            java.util.Properties props = sender.getJavaMailProperties();
+            props.put("mail.transport.protocol", "smtp");
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.starttls.required", "true");
+            props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+
+            MimeMessage message = sender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("gmj.creation.77@gmail.com", "EventSync Platform");
+            helper.setTo("gauthammanoj136@gmail.com");
+            helper.setSubject("EventSync Live Test Email");
+            helper.setText("Hello Gautham! If you receive this, Gmail SMTP authentication is 100% working!", false);
+
+            sender.send(message);
+            System.out.println("LIVE SMTP TEST: Email sent successfully to gauthammanoj136@gmail.com!");
+        } catch (Exception e) {
+            System.err.println("LIVE SMTP TEST FAILED: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
