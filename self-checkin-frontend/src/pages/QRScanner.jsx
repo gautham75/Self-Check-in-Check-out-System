@@ -55,12 +55,33 @@ const QRScanner = () => {
     } catch (err) {
       console.error('QR Scan error:', err);
       const msg = err.response?.data?.message || err.message || 'Could not process QR Code or Participant ID.';
-      Swal.fire({
-        icon: 'error',
-        title: 'Scan Processing Failed',
-        text: msg,
-        confirmButtonColor: '#2563eb'
-      });
+
+      if (msg.includes('EXPIRED_QR_PASS') || msg.includes('expired')) {
+        Swal.fire({
+          icon: 'warning',
+          title: '🛑 EXPIRED QR PASS (SCREENSHOT DETECTED)',
+          html: `<div style="font-size:0.95rem; color:#991B1B;">
+            <strong>Anti-Proxy Security Notice:</strong><br/>
+            This QR code pass has expired. Screenshots and forwarded images are automatically rejected to prevent proxy check-in.<br/><br/>
+            <span className="text-muted">Please instruct the attendee to open their <strong>Live Mobile Pass</strong> on their phone screen.</span>
+          </div>`,
+          confirmButtonColor: '#DC2626'
+        });
+      } else if (msg.includes('INVALID_QR_PASS')) {
+        Swal.fire({
+          icon: 'error',
+          title: 'INVALID / TAMPERED SECURITY PASS',
+          text: 'The scanned security token is invalid or corrupted.',
+          confirmButtonColor: '#DC2626'
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Scan Processing Failed',
+          text: msg,
+          confirmButtonColor: '#2563eb'
+        });
+      }
     } finally {
       setScanning(false);
     }

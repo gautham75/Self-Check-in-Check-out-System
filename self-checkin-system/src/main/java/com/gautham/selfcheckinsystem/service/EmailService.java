@@ -12,6 +12,10 @@ public class EmailService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
+    @org.springframework.beans.factory.annotation.Value("${spring.mail.username:}")
+    private String fromEmail;
+
+    @org.springframework.scheduling.annotation.Async
     public void sendRegistrationEmail(
             String toEmail,
             String participantName,
@@ -22,10 +26,21 @@ public class EmailService {
             return;
         }
 
+        if (fromEmail == null || fromEmail.isBlank()) {
+            System.out.println("EmailService Notice: spring.mail.username is not set in .env / properties. Skipping registration email dispatch.");
+            return;
+        }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            String sender = fromEmail.trim();
+            try {
+                helper.setFrom(sender, "EventSync Platform");
+            } catch (Exception ex) {
+                helper.setFrom(sender);
+            }
             helper.setTo(toEmail);
             helper.setSubject("Registration Confirmed - EventSync Platform");
 
@@ -78,6 +93,7 @@ public class EmailService {
         }
     }
 
+    @org.springframework.scheduling.annotation.Async
     public void sendCertificateEmail(
             String toEmail,
             String participantName,
@@ -86,6 +102,7 @@ public class EmailService {
         sendCertificateEmail(toEmail, participantName, eventName, certificateUrl, null);
     }
 
+    @org.springframework.scheduling.annotation.Async
     public void sendCertificateEmail(
             String toEmail,
             String participantName,
@@ -98,10 +115,21 @@ public class EmailService {
             return;
         }
 
+        if (fromEmail == null || fromEmail.isBlank()) {
+            System.out.println("EmailService Notice: spring.mail.username is not set in .env / properties. Skipping certificate email dispatch.");
+            return;
+        }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            String sender = fromEmail.trim();
+            try {
+                helper.setFrom(sender, "EventSync Platform");
+            } catch (Exception ex) {
+                helper.setFrom(sender);
+            }
             helper.setTo(toEmail);
             helper.setSubject("Congratulations! Your Participation Certificate is Ready - EventSync");
 

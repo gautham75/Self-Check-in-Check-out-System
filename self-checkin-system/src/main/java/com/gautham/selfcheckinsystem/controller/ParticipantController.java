@@ -148,4 +148,43 @@ public class ParticipantController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                 .body(resource);
     }
+
+    @GetMapping("/dynamic-pass/{id}")
+    public ResponseEntity<Map<String, Object>> getDynamicPassDetails(@PathVariable Long id) {
+        Participant participant = participantService.getParticipantById(id);
+        String qrPayload = participantService.generateDynamicPassPayload(participant);
+        long currentSec = System.currentTimeMillis() / 1000L;
+        long timeStep = currentSec / 30L;
+        long secondsRemaining = 30L - (currentSec % 30L);
+
+        Map<String, Object> pass = new HashMap<>();
+        pass.put("participant", participant);
+        pass.put("qrPayload", qrPayload);
+        pass.put("timeStep", timeStep);
+        pass.put("secondsRemaining", secondsRemaining);
+        return ResponseEntity.ok(pass);
+    }
+
+    @GetMapping("/dynamic-qr/{id}")
+    public ResponseEntity<Resource> getDynamicQRCode(@PathVariable Long id) {
+        Participant participant = participantService.getParticipantById(id);
+        String fileName = "dynamic_" + id;
+        String qrPayload = participantService.generateDynamicPassPayload(participant);
+
+        try {
+            QRCodeGenerator.generateQRCode(qrPayload, fileName);
+            File qrFile = new File("qrcodes/" + fileName + ".png");
+            if (qrFile.exists()) {
+                Resource resource = new FileSystemResource(qrFile);
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_PNG)
+                        .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                        .body(resource);
+            }
+        } catch (Exception e) {
+            System.err.println("Dynamic QR generation notice: " + e.getMessage());
+        }
+
+        return ResponseEntity.notFound().build();
+    }
 }

@@ -8,9 +8,10 @@ import com.gautham.selfcheckinsystem.exception.ResourceNotFoundException;
 import com.gautham.selfcheckinsystem.repository.EventRepository;
 import com.gautham.selfcheckinsystem.repository.ParticipantRepository;
 import com.gautham.selfcheckinsystem.util.QRCodeGenerator;
+import com.gautham.selfcheckinsystem.util.QRCodeReaderUtil;
+import com.gautham.selfcheckinsystem.util.TotpUtil;
 import com.google.zxing.WriterException;
 import org.springframework.stereotype.Service;
-import com.gautham.selfcheckinsystem.util.QRCodeReaderUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -68,30 +69,24 @@ public class ParticipantService {
         }
     }
 
+    public String generateDynamicPassPayload(Participant participant) {
+        long currentStep = TotpUtil.getCurrentTimeStep();
+        String token = TotpUtil.generateTotpToken(participant.getId(), currentStep);
+        return String.format(
+                "{\"type\":\"DYNAMIC_PASS\",\"id\":%d,\"step\":%d,\"token\":\"%s\",\"name\":\"%s\",\"reg\":\"%s\"}",
+                participant.getId(),
+                currentStep,
+                token,
+                participant.getFullName() != null ? participant.getFullName().replace("\"", "\\\"") : "",
+                participant.getRegistrationNumber() != null ? participant.getRegistrationNumber().replace("\"", "\\\"") : ""
+        );
+    }
+
     public String generateQrCodeForParticipant(Participant participant) {
         String fileName = "participant_" + participant.getId();
         String eventName = participant.getEvent() != null ? participant.getEvent().getEventName() : "EventSync Event";
 
-        String qrPayload = String.format("""
-                EventSync Digital Pass
-                ----------------------------------
-                Name: %s
-                Reg No: %s
-                Event: %s
-                Department: %s (%s)
-                College: %s
-                Email: %s
-                Participant ID: %d
-                """,
-                participant.getFullName() != null ? participant.getFullName() : "N/A",
-                participant.getRegistrationNumber() != null ? participant.getRegistrationNumber() : "N/A",
-                eventName,
-                participant.getDepartment() != null ? participant.getDepartment() : "N/A",
-                participant.getYear() != null ? participant.getYear() : "N/A",
-                participant.getCollege() != null ? participant.getCollege() : "N/A",
-                participant.getEmail() != null ? participant.getEmail() : "N/A",
-                participant.getId()
-        );
+        String qrPayload = generateDynamicPassPayload(participant);
 
         try {
             QRCodeGenerator.generateQRCode(qrPayload, fileName);
@@ -127,6 +122,43 @@ public class ParticipantService {
             }
         }
 
+        // 2. Check for TOTP Dynamic Security Pass JSON
+        if (cleanInput.contains("\"DYNAMIC_PASS\"") || cleanInput.contains("DYNAMIC_PASS")) {
+            try {
+                Long id = null;
+                Long step = null;
+                String token = null;
+
+                for (String part : cleanInput.replaceAll("[{}\"]", "").split(",")) {
+                    String[] kv = part.split(":");
+                    if (kv.length >= 2) {
+                        String key = kv[0].trim();
+                        String val = kv[1].trim();
+                        if ("id".equalsIgnoreCase(key)) id = Long.parseLong(val);
+                        if ("step".equalsIgnoreCase(key)) step = Long.parseLong(val);
+                        if ("token".equalsIgnoreCase(key)) token = val;
+                    }
+                }
+
+                if (id != null && step != null && token != null) {
+                    boolean isValid = TotpUtil.validateTotpToken(id, step, token);
+                    if (!isValid) {
+                        long currentStep = TotpUtil.getCurrentTimeStep();
+                        if (Math.abs(currentStep - step) > 1) {
+                            throw new IllegalArgumentException("EXPIRED_QR_PASS: This QR code pass has expired (screenshots/forwarded passes are rejected). Please refresh the pass on your mobile device.");
+                        } else {
+                            throw new IllegalArgumentException("INVALID_QR_PASS: Tampered or invalid security token.");
+                        }
+                    }
+                    return checkInParticipant(id);
+                }
+            } catch (IllegalArgumentException ex) {
+                throw ex;
+            } catch (Exception parseEx) {
+                System.err.println("Dynamic QR parse error: " + parseEx.getMessage());
+            }
+        }
+
         if (cleanInput.contains("Participant ID:")) {
             for (String line : cleanInput.split("\n")) {
                 if (line.contains("Participant ID:")) {
@@ -143,32 +175,32 @@ public class ParticipantService {
             }
         }
 
-        // 2. Try numeric Participant ID lookup
+        // 3. Try numeric Participant ID lookup
         try {
             Long id = Long.parseLong(cleanInput);
             return checkInParticipant(id);
         } catch (NumberFormatException ignored) {}
 
-        // 3. Try exact Registration Number lookup
+        // 4. Try exact Registration Number lookup
         Participant pByReg = participantRepository.findByRegistrationNumber(cleanInput)
                 .orElse(null);
         if (pByReg != null) {
             return checkInParticipant(pByReg.getId());
         }
 
-        // 4. Try case-insensitive registration number search
+        // 5. Try case-insensitive registration number search
         List<Participant> regList = participantRepository.findByRegistrationNumberContainingIgnoreCase(cleanInput);
         if (!regList.isEmpty()) {
             return checkInParticipant(regList.get(0).getId());
         }
 
-        // 5. Try email search
+        // 6. Try email search
         List<Participant> emailList = participantRepository.findByEmailContainingIgnoreCase(cleanInput);
         if (!emailList.isEmpty()) {
             return checkInParticipant(emailList.get(0).getId());
         }
 
-        // 6. Try name search
+        // 7. Try name search
         List<Participant> nameList = participantRepository.findByFullNameContainingIgnoreCase(cleanInput);
         if (!nameList.isEmpty()) {
             return checkInParticipant(nameList.get(0).getId());
@@ -208,10 +240,11 @@ public class ParticipantService {
         savedParticipant = participantRepository.save(savedParticipant);
 
         try {
+            String passUrl = "http://localhost:5173/pass/" + savedParticipant.getId();
             emailService.sendRegistrationEmail(
                     savedParticipant.getEmail(),
                     savedParticipant.getFullName(),
-                    savedParticipant.getQrCodeUrl()
+                    passUrl
             );
         } catch (Exception e) {
             System.err.println("Registration email sending warning: " + e.getMessage());

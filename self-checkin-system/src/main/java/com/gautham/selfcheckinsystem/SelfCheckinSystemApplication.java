@@ -2,10 +2,12 @@ package com.gautham.selfcheckinsystem;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 import java.io.File;
 import java.util.Scanner;
 
 @SpringBootApplication
+@EnableAsync
 public class SelfCheckinSystemApplication {
 
     public static void main(String[] args) {

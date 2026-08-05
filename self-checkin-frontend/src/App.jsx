@@ -16,6 +16,7 @@ const Certificates = lazy(() => import('./pages/Certificates'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Settings = lazy(() => import('./pages/Settings'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
+const DigitalPass = lazy(() => import('./pages/DigitalPass'));
 const Forbidden = lazy(() => import('./pages/Forbidden'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -84,6 +85,7 @@ function App() {
       <Routes>
         {/* Standalone Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/pass/:participantId" element={<DigitalPass />} />
         <Route path="/403" element={<Forbidden />} />
         <Route path="/404" element={<NotFound />} />
 
