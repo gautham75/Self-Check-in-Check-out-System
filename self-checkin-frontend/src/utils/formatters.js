@@ -45,8 +45,12 @@ export const formatDuration = (minutes) => {
 
 export const resolveApiUrl = (url) => {
   if (!url) return '';
+  const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+  let apiBase = rawBase.trim();
+  if (apiBase.endsWith('/')) apiBase = apiBase.slice(0, -1);
+  if (!apiBase.endsWith('/api')) apiBase += '/api';
+
   if (url.startsWith('http://localhost:8080/api')) {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
     return url.replace('http://localhost:8080/api', apiBase);
   }
   return url;

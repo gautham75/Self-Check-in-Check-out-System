@@ -1,7 +1,11 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+let normalizedBase = rawBase.trim();
+if (normalizedBase.endsWith('/')) normalizedBase = normalizedBase.slice(0, -1);
+if (!normalizedBase.endsWith('/api')) normalizedBase += '/api';
+const API_BASE_URL = normalizedBase;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
