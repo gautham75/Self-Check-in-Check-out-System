@@ -36,7 +36,7 @@ class EmailServiceTest {
 
         emailService.sendRegistrationEmail("user@example.com", "John Doe", "http://localhost:8080/qr/1");
 
-        verify(mailSender, times(1)).send(any(MimeMessage.class));
+        verify(mailSender, timeout(2000).times(1)).send(any(MimeMessage.class));
     }
 
     @Test
@@ -46,7 +46,7 @@ class EmailServiceTest {
 
         emailService.sendCertificateEmail("user@example.com", "John Doe", "Tech Summit 2026", "http://localhost:8080/cert/1");
 
-        verify(mailSender, times(1)).send(any(MimeMessage.class));
+        verify(mailSender, timeout(2000).times(1)).send(any(MimeMessage.class));
     }
 
     @Test
@@ -58,7 +58,7 @@ class EmailServiceTest {
 
         emailService.sendRegistrationEmail("user@example.com", "John Doe", "http://localhost:8080/qr/1");
 
-        verify(mailSender, times(1)).send(any(MimeMessage.class));
+        verify(mailSender, timeout(2000).times(1)).send(any(MimeMessage.class));
     }
 
     @Test

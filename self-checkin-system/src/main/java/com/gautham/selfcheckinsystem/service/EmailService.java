@@ -21,81 +21,82 @@ public class EmailService {
             String toEmail,
             String participantName,
             String qrUrl) {
-
-        if (mailSender == null) {
-            System.out.println("EmailService: JavaMailSender is not configured. Skipping registration email.");
-            return;
-        }
-
-        if (fromEmail == null || fromEmail.isBlank()) {
-            fromEmail = "gmj.creation.77@gmail.com";
-        }
-
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            message.setHeader("X-Priority", "1");
-            message.setHeader("Importance", "High");
-            message.setHeader("X-MSMail-Priority", "High");
-
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            String sender = fromEmail.trim();
-            try {
-                helper.setFrom(sender, "EventSync Platform");
-            } catch (Exception ex) {
-                helper.setFrom(sender);
+        CompletableFuture.runAsync(() -> {
+            if (mailSender == null) {
+                System.out.println("EmailService: JavaMailSender is not configured. Skipping registration email.");
+                return;
             }
-            helper.setReplyTo(sender);
-            helper.setTo(toEmail);
-            helper.setSubject("Registration Confirmed - EventSync Platform");
 
-            String htmlBody = """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <style>
-                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F5F3ED; margin: 0; padding: 20px; color: #212227; }
-                        .email-container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #E5E7EB; }
-                        .email-header { background-color: #212227; padding: 28px 32px; text-align: center; border-bottom: 4px solid #FFD036; }
-                        .logo-badge { display: inline-block; background: #FFD036; color: #212227; font-weight: 800; font-size: 14px; padding: 6px 14px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 8px; }
-                        .header-title { color: #FFFFFF; font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-                        .email-body { padding: 36px 32px; }
-                        .welcome-text { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 12px; }
-                        .content-text { font-size: 14px; line-height: 1.6; color: #4B5563; margin-bottom: 24px; }
-                        .btn-cta { display: inline-block; background-color: #212227; color: #FFD036 !important; font-weight: 700; font-size: 15px; padding: 14px 28px; text-decoration: none; border-radius: 10px; border: 2px solid #FFD036; box-shadow: 0 4px 12px rgba(33,34,39,0.2); }
-                        .email-footer { background-color: #F9FAFB; padding: 20px 32px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px solid #F3F4F6; }
-                    </style>
-                </head>
-                <body>
-                    <div class="email-container">
-                        <div class="email-header">
-                            <div class="logo-badge">EVENTSYNC PLATFORM</div>
-                            <h1 class="header-title">Registration Confirmation</h1>
-                        </div>
-                        <div class="email-body">
-                            <div class="welcome-text">Hello %s,</div>
-                            <p class="content-text">
-                                Your registration has been processed successfully! Your official digital event pass and QR code have been issued. Please keep this email handy for event entry and check-in processing.
-                            </p>
-                            <div style="text-align: center; margin: 28px 0;">
-                                <a href="%s" class="btn-cta" target="_blank">View Digital Event Pass & QR Code</a>
+            if (fromEmail == null || fromEmail.isBlank()) {
+                fromEmail = "gmj.creation.77@gmail.com";
+            }
+
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                message.setHeader("X-Priority", "1");
+                message.setHeader("Importance", "High");
+                message.setHeader("X-MSMail-Priority", "High");
+
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+                String sender = fromEmail.trim();
+                try {
+                    helper.setFrom(sender, "EventSync Platform");
+                } catch (Exception ex) {
+                    helper.setFrom(sender);
+                }
+                helper.setReplyTo(sender);
+                helper.setTo(toEmail);
+                helper.setSubject("Registration Confirmed - EventSync Platform");
+
+                String htmlBody = """
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F5F3ED; margin: 0; padding: 20px; color: #212227; }
+                            .email-container { max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #E5E7EB; }
+                            .email-header { background-color: #212227; padding: 28px 32px; text-align: center; border-bottom: 4px solid #FFD036; }
+                            .logo-badge { display: inline-block; background: #FFD036; color: #212227; font-weight: 800; font-size: 14px; padding: 6px 14px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 8px; }
+                            .header-title { color: #FFFFFF; font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+                            .email-body { padding: 36px 32px; }
+                            .welcome-text { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+                            .content-text { font-size: 14px; line-height: 1.6; color: #4B5563; margin-bottom: 24px; }
+                            .btn-cta { display: inline-block; background-color: #212227; color: #FFD036 !important; font-weight: 700; font-size: 15px; padding: 14px 28px; text-decoration: none; border-radius: 10px; border: 2px solid #FFD036; box-shadow: 0 4px 12px rgba(33,34,39,0.2); }
+                            .email-footer { background-color: #F9FAFB; padding: 20px 32px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px solid #F3F4F6; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="logo-badge">EVENTSYNC PLATFORM</div>
+                                <h1 class="header-title">Registration Confirmation</h1>
+                            </div>
+                            <div class="email-body">
+                                <div class="welcome-text">Hello %s,</div>
+                                <p class="content-text">
+                                    Your registration has been processed successfully! Your official digital event pass and QR code have been issued. Please keep this email handy for event entry and check-in processing.
+                                </p>
+                                <div style="text-align: center; margin: 28px 0;">
+                                    <a href="%s" class="btn-cta" target="_blank">View Digital Event Pass & QR Code</a>
+                                </div>
+                            </div>
+                            <div class="email-footer">
+                                &copy; 2026 EventSync Platform • Event Attendance & Entry Management
                             </div>
                         </div>
-                        <div class="email-footer">
-                            &copy; 2026 EventSync Platform • Smart Event Check-In & Attendance Management System
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """.formatted(participantName, qrUrl != null ? qrUrl : "#");
+                    </body>
+                    </html>
+                    """.formatted(participantName, qrUrl != null ? qrUrl : "#");
 
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-            System.out.println("Registration HTML email dispatched to: " + toEmail);
-        } catch (Exception e) {
-            System.err.println("EmailService Notice: Could not send registration email to " + toEmail + ". Error: " + e.getMessage());
-        }
+                helper.setText(htmlBody, true);
+                mailSender.send(message);
+                System.out.println("Registration HTML email dispatched to: " + toEmail);
+            } catch (Exception e) {
+                System.err.println("EmailService Notice: Could not send registration email to " + toEmail + ". Error: " + e.getMessage());
+            }
+        });
     }
 
     public String sendCheckInOtpEmailDirect(String toEmail, String name, String eventName, String otpCode) {
