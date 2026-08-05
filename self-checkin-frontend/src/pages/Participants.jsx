@@ -257,7 +257,7 @@ const Participants = () => {
       const result = await Swal.fire({
         title: '🔐 Check-In Identity OTP',
         html: `A 6-digit Check-In OTP code has been emailed to <strong>${attendeeEmail}</strong>.<br/>
-               ${debugCode ? `<div class="mt-2 p-2 bg-warning bg-opacity-10 rounded text-dark font-monospace" style="font-size:0.8rem; border: 1px dashed #D97706;">Current OTP PIN: <strong>${debugCode}</strong></div>` : ''}<br/>
+               ${debugCode ? `<div class="mt-3 p-3 rounded text-dark font-monospace" style="background-color: #FEF3C7; border: 2px solid #D97706; font-size: 1.05rem;">⚡ Current Check-In PIN: <strong style="font-size: 1.4rem; color: #92400E; letter-spacing: 3px;">${debugCode}</strong></div>` : ''}<br/>
                Enter the 6-digit PIN to complete entry for <strong>${participantName || 'Participant'}</strong>:`,
         input: 'text',
         inputPlaceholder: 'Enter 6-digit OTP (e.g. 482910)',
