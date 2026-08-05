@@ -24,6 +24,12 @@ public class ParticipantService {
     private final S3Service s3Service;
     private final EmailService emailService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     public ParticipantService(
             ParticipantRepository participantRepository,
             EventRepository eventRepository,
@@ -100,7 +106,9 @@ public class ParticipantService {
             System.err.println("Failed to generate rich QR code for participant " + participant.getId() + ": " + e.getMessage());
         }
 
-        return "http://localhost:8080/api/participants/qrcode/" + participant.getId();
+        String base = (backendUrl != null && !backendUrl.isBlank()) ? backendUrl.trim() : "http://localhost:8080";
+        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+        return base + "/api/participants/qrcode/" + participant.getId();
     }
 
     public Participant scanQRCode(String input) throws Exception {
@@ -240,7 +248,9 @@ public class ParticipantService {
         savedParticipant = participantRepository.save(savedParticipant);
 
         try {
-            String passUrl = "http://localhost:5173/pass/" + savedParticipant.getId();
+            String fBase = (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl.trim() : "http://localhost:5173";
+            if (fBase.endsWith("/")) fBase = fBase.substring(0, fBase.length() - 1);
+            String passUrl = fBase + "/pass/" + savedParticipant.getId();
             emailService.sendRegistrationEmail(
                     savedParticipant.getEmail(),
                     savedParticipant.getFullName(),

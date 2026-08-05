@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react';
-import axios from 'axios';
+import api from '../services/api';
+import { resolveApiUrl } from '../utils/formatters';
 import { FaShieldAlt, FaSync, FaClock, FaCheckCircle, FaExclamationTriangle, FaIdCard } from 'react-icons/fa';
 
 const DigitalPass = () => {
@@ -13,7 +14,7 @@ const DigitalPass = () => {
 
   const fetchPassData = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/participants/dynamic-pass/${participantId}`);
+      const response = await api.get(`/participants/dynamic-pass/${participantId}`);
       setPassData(response.data);
       if (response.data.secondsRemaining) {
         setSecondsRemaining(response.data.secondsRemaining);
@@ -88,7 +89,7 @@ const DigitalPass = () => {
         <div className="p-4 text-center bg-dark position-relative">
           <div className="position-relative d-inline-block p-3 bg-white rounded-4 shadow-sm mb-3">
             <img 
-              src={`http://localhost:8080/api/participants/dynamic-qr/${participantId}?t=${qrTimestamp}`} 
+              src={resolveApiUrl(`http://localhost:8080/api/participants/dynamic-qr/${participantId}?t=${qrTimestamp}`)} 
               alt="Dynamic Event Security Pass QR"
               className="img-fluid"
               style={{ width: '220px', height: '220px' }}
