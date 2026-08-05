@@ -12,7 +12,7 @@ public class EmailService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
-    @org.springframework.beans.factory.annotation.Value("${spring.mail.username:}")
+    @org.springframework.beans.factory.annotation.Value("${spring.mail.username:gmj.creation.77@gmail.com}")
     private String fromEmail;
 
     @org.springframework.scheduling.annotation.Async
