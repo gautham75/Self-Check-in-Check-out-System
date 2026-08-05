@@ -27,8 +27,8 @@ public class S3Service {
         File file = new File(filePath);
         String key = file.getName();
 
-        try {
-            if (s3Client != null) {
+        if (s3Client != null) {
+            try {
                 PutObjectRequest request = PutObjectRequest.builder()
                         .bucket(bucketName)
                         .key(key)
@@ -37,9 +37,9 @@ public class S3Service {
                 s3Client.putObject(request, RequestBody.fromFile(file));
 
                 return "https://" + bucketName + ".s3.eu-north-1.amazonaws.com/" + key;
+            } catch (Exception e) {
+                System.err.println("S3Service Notice: AWS S3 upload failed (" + e.getMessage() + "). Falling back to direct URL.");
             }
-        } catch (Exception e) {
-            System.err.println("S3Service Notice: AWS S3 upload failed (" + e.getMessage() + "). Falling back to local file URL.");
         }
 
         String base = (backendUrl != null && !backendUrl.isBlank()) ? backendUrl.trim() : "http://localhost:8080";

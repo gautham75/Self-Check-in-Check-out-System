@@ -12,23 +12,27 @@ import software.amazon.awssdk.services.s3.S3Client;
 @Configuration
 public class S3Config {
 
-    @Value("${aws.access-key}")
+    @Value("${aws.access-key:}")
     private String accessKey;
 
-    @Value("${aws.secret-key}")
+    @Value("${aws.secret-key:}")
     private String secretKey;
 
-    @Value("${aws.region}")
+    @Value("${aws.region:eu-north-1}")
     private String region;
 
     @Bean
     public S3Client s3Client() {
+        if (accessKey == null || accessKey.isBlank() || secretKey == null || secretKey.isBlank()) {
+            System.out.println("S3Config Notice: AWS credentials are not set. S3Client initialized as null for local/direct fallback.");
+            return null;
+        }
 
         AwsBasicCredentials credentials =
                 AwsBasicCredentials.create(accessKey, secretKey);
 
         return S3Client.builder()
-                .region(Region.of(region))
+                .region(Region.of(region != null && !region.isBlank() ? region : "eu-north-1"))
                 .credentialsProvider(
                         StaticCredentialsProvider.create(credentials))
                 .build();
