@@ -96,16 +96,34 @@ const QRScanner = () => {
 
       if (result.isDenied) {
         // Staff clicked "Resend New OTP" -> generate a DIFFERENT fresh OTP code
-        currentOtpRes = await api.post(`/participants/send-checkin-otp/${participantId}`);
         Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'info',
-          title: 'Fresh OTP Dispatched!',
-          text: `A new 6-digit code has been emailed to ${attendeeEmail}`,
-          timer: 2000,
+          title: 'Dispatching Fresh OTP...',
+          text: 'Generating a brand new 6-digit code and emailing attendee...',
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          allowOutsideClick: false,
           showConfirmButton: false
         });
+
+        try {
+          currentOtpRes = await api.post(`/participants/send-checkin-otp/${participantId}`);
+          await Swal.fire({
+            icon: 'success',
+            title: 'New OTP Dispatched!',
+            text: `A fresh 6-digit code has been sent to ${attendeeEmail}`,
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Resend Failed',
+            text: 'Could not generate new OTP code.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
         continue;
       }
 
