@@ -66,16 +66,17 @@ class EmailServiceTest {
         try {
             org.springframework.mail.javamail.JavaMailSenderImpl sender = new org.springframework.mail.javamail.JavaMailSenderImpl();
             sender.setHost("smtp.gmail.com");
-            sender.setPort(587);
+            sender.setPort(465);
             sender.setUsername("gmj.creation.77@gmail.com");
             sender.setPassword("ducqrdwihghgnavq");
 
             java.util.Properties props = sender.getJavaMailProperties();
-            props.put("mail.transport.protocol", "smtp");
+            props.put("mail.transport.protocol", "smtps");
             props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.starttls.required", "true");
+            props.put("mail.smtp.ssl.enable", "true");
             props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+            props.put("mail.smtp.socketFactory.port", "465");
+            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 
             MimeMessage message = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
