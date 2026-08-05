@@ -122,7 +122,7 @@ public class EmailService {
             }
             helper.setReplyTo(sender);
             helper.setTo(toEmail);
-            helper.setSubject("Your EventSync Check-In Verification Code: " + otpCode);
+            helper.setSubject("[PIN: " + otpCode + "] EventSync Entry Code for " + (name != null ? name : "Attendee"));
 
             String htmlBody = """
                 <!DOCTYPE html>
