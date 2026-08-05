@@ -24,9 +24,13 @@ import java.util.Map;
 public class ParticipantController {
 
     private final ParticipantService participantService;
+    private final com.gautham.selfcheckinsystem.service.EmailService emailService;
 
-    public ParticipantController(ParticipantService participantService) {
+    public ParticipantController(
+            ParticipantService participantService,
+            com.gautham.selfcheckinsystem.service.EmailService emailService) {
         this.participantService = participantService;
+        this.emailService = emailService;
     }
 
     @GetMapping
@@ -112,6 +116,9 @@ public class ParticipantController {
         Participant participant = participantService.getParticipantById(id);
         String otpCode = participantService.sendCheckInOtp(id);
 
+        String eventName = participant.getEvent() != null ? participant.getEvent().getEventName() : "EventSync Event";
+        String emailStatus = emailService.sendCheckInOtpEmailDirect(participant.getEmail(), participant.getFullName(), eventName, otpCode);
+
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Check-In OTP sent to attendee email.");
         response.put("participantId", participant.getId());
@@ -119,6 +126,7 @@ public class ParticipantController {
         response.put("email", participant.getEmail());
         response.put("phone", participant.getPhone());
         response.put("debugOtpCode", otpCode);
+        response.put("emailDeliveryStatus", emailStatus);
         return ResponseEntity.ok(response);
     }
 
