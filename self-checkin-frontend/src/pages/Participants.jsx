@@ -249,19 +249,57 @@ const Participants = () => {
 
   const handleCheckIn = async (id, name) => {
     try {
-      await participantService.checkIn(id);
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: `Checked In: ${name}`,
-        showConfirmButton: false,
-        timer: 1500
+      // 1. Dispatch Check-In OTP to attendee's email
+      const otpRes = await api.post(`/participants/send-checkin-otp/${id}`);
+      const attendeeEmail = otpRes.data.email || 'attendee email';
+
+      // 2. Prompt for 6-Digit OTP received on attendee phone/email
+      const { value: otpCode } = await Swal.fire({
+        title: '🔐 Check-In Identity OTP',
+        html: `A 6-digit Check-In OTP code has been emailed to <strong>${attendeeEmail}</strong>.<br/><br/>
+               Enter the 6-digit PIN to complete entry for <strong>${name || 'Participant'}</strong>:`,
+        input: 'text',
+        inputPlaceholder: 'Enter 6-digit OTP (e.g. 482910)',
+        inputAttributes: {
+          maxLength: 6,
+          style: 'text-align: center; font-size: 1.5rem; letter-spacing: 4px; font-family: monospace;'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Verify & Issue Certificate',
+        confirmButtonColor: '#212227',
+        cancelButtonColor: '#6B7280',
+        allowOutsideClick: false,
+        inputValidator: (val) => {
+          if (!val || val.trim().length !== 6) {
+            return 'Please enter a valid 6-digit OTP PIN.';
+          }
+        }
       });
+
+      if (!otpCode) return;
+
+      // 3. Verify OTP & Issue Certificate
+      const verifyRes = await api.post('/participants/checkin-with-otp', {
+        participantId: id,
+        otpCode: otpCode.trim()
+      });
+
+      const certLink = verifyRes.data.certificateUrl;
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Check-In Verified!',
+        html: `Participant <strong>${name || 'Participant'}</strong> checked in successfully.<br/>
+               ${certLink ? `<a href="${resolveApiUrl(certLink)}" target="_blank" class="btn btn-sm btn-success mt-2">📜 View Certificate PDF</a>` : ''}`,
+        confirmButtonColor: '#212227'
+      });
+
       notifyDataChanged();
       fetchInitialData();
     } catch (err) {
-      console.error('Check-in error:', err);
+      console.error('Check-in OTP error:', err);
+      const msg = err.response?.data?.message || err.message || 'Could not verify Check-In OTP.';
+      Swal.fire('Check-In Failed', msg, 'error');
     }
   };
 

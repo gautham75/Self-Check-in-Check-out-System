@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import api from '../services/api';
 import { resolveApiUrl, formatDateTime, formatDuration } from '../utils/formatters';
 import {
@@ -11,19 +13,56 @@ import {
   FaBuilding,
   FaBarcode,
   FaCertificate,
-  FaShieldAlt
+  FaShieldAlt,
+  FaStopCircle
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const QRScanner = () => {
   const [qrCodeInput, setQrCodeInput] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
   const [lastScanParticipant, setLastScanParticipant] = useState(null);
   const [scanHistory, setScanHistory] = useState([]);
+  const scannerRef = useRef(null);
 
-  const handleScanSubmit = async (e) => {
-    if (e) e.preventDefault();
-    const query = qrCodeInput.trim();
+  useEffect(() => {
+    let html5QrcodeScanner = null;
+    if (cameraActive) {
+      html5QrcodeScanner = new Html5QrcodeScanner(
+        'qr-reader-container',
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        false
+      );
+
+      html5QrcodeScanner.render(
+        async (decodedText) => {
+          if (decodedText) {
+            setCameraActive(false);
+            try {
+              if (html5QrcodeScanner) html5QrcodeScanner.clear();
+            } catch (_) {}
+            setQrCodeInput(decodedText);
+            executeProcessQuery(decodedText);
+          }
+        },
+        (error) => {
+          // ignore scan errors
+        }
+      );
+    }
+
+    return () => {
+      if (html5QrcodeScanner) {
+        try {
+          html5QrcodeScanner.clear();
+        } catch (_) {}
+      }
+    };
+  }, [cameraActive]);
+
+  const executeProcessQuery = async (queryStr) => {
+    const query = (queryStr || qrCodeInput).trim();
     if (!query) {
       Swal.fire('Input Required', 'Please enter a participant ID, QR code payload, or registration number.', 'info');
       return;
@@ -114,7 +153,6 @@ const QRScanner = () => {
       });
 
       setQrCodeInput('');
-      notifyDataChanged();
     } catch (err) {
       console.error('QR Scan / OTP error:', err);
       const msg = err.response?.data?.message || err.message || 'Could not process Check-In OTP.';
@@ -127,6 +165,11 @@ const QRScanner = () => {
     } finally {
       setScanning(false);
     }
+  };
+
+  const handleScanSubmit = (e) => {
+    if (e) e.preventDefault();
+    executeProcessQuery(qrCodeInput);
   };
 
   const handleManualCheckOut = async (id, name) => {
@@ -171,6 +214,20 @@ const QRScanner = () => {
               </span>
             </div>
 
+            {/* Live Web Camera Viewport */}
+            {cameraActive && (
+              <div className="mb-4 p-3 bg-light rounded border text-center">
+                <div id="qr-reader-container" style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}></div>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger mt-2 fw-semibold d-inline-flex align-items-center gap-1"
+                  onClick={() => setCameraActive(false)}
+                >
+                  <FaStopCircle /> Stop Camera Feed
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleScanSubmit}>
               <div className="mb-4">
                 <label className="form-label fw-semibold text-dark" style={{ fontSize: '0.875rem' }}>
@@ -195,6 +252,15 @@ const QRScanner = () => {
               </div>
 
               <div className="d-grid gap-2">
+                {!cameraActive && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-md rounded-md fw-bold mb-2 d-flex align-items-center justify-content-center gap-2"
+                    onClick={() => setCameraActive(true)}
+                  >
+                    <FaCamera /> <span>Open Live Camera Scanner</span>
+                  </button>
+                )}
                 <button
                   type="submit"
                   className="btn btn-primary btn-lg rounded-md fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
@@ -203,11 +269,11 @@ const QRScanner = () => {
                   {scanning ? (
                     <>
                       <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      <span>Processing Scan...</span>
+                      <span>Processing Scan &amp; OTP...</span>
                     </>
                   ) : (
                     <>
-                      <FaCamera /> <span>Execute Check-In Scan</span>
+                      <FaShieldAlt /> <span>Execute Check-In &amp; Send OTP</span>
                     </>
                   )}
                 </button>
