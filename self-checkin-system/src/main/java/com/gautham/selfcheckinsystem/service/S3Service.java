@@ -16,7 +16,7 @@ public class S3Service {
     @Value("${aws.bucket-name:selfcheckin-storage}")
     private String bucketName;
 
-    @Value("${app.backend.url:http://localhost:8080}")
+    @Value("${app.backend.url:${RENDER_EXTERNAL_URL:http://localhost:8080}}")
     private String backendUrl;
 
     public S3Service(S3Client s3Client) {

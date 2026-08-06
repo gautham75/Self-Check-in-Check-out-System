@@ -107,14 +107,15 @@ public class ParticipantController {
         );
     }
     @PostMapping("/checkout/{id}")
-    public ResponseEntity<Map<String,String>> checkOutParticipant(
+    public ResponseEntity<Map<String,Object>> checkOutParticipant(
             @PathVariable Long id) {
 
-        participantService.checkOutParticipant(id);
+        Participant participant = participantService.checkOutParticipant(id);
 
-        Map<String,String> response = new HashMap<>();
+        Map<String,Object> response = new HashMap<>();
 
-        response.put("message","Check-out Successful");
+        response.put("message","Check-out Successful. Certificate Generated.");
+        response.put("certificateUrl", participant.getCertificateUrl());
 
         return ResponseEntity.ok(response);
     }
@@ -142,9 +143,8 @@ public class ParticipantController {
         Participant participant = participantService.checkInWithOtp(participantId, otpCode);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Check-In Verified & Certificate Generated Successfully!");
+        response.put("message", "Check-In Verified Successfully!");
         response.put("participant", participant);
-        response.put("certificateUrl", participant.getCertificateUrl());
         return ResponseEntity.ok(response);
     }
 

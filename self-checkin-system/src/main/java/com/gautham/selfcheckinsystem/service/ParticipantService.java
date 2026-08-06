@@ -29,7 +29,7 @@ public class ParticipantService {
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
-    @org.springframework.beans.factory.annotation.Value("${app.backend.url:http://localhost:8080}")
+    @org.springframework.beans.factory.annotation.Value("${app.backend.url:${RENDER_EXTERNAL_URL:http://localhost:8080}}")
     private String backendUrl;
 
     public ParticipantService(
@@ -345,8 +345,18 @@ public class ParticipantService {
                 .toMinutes();
 
         participant.setDurationMinutes(duration);
+        participantRepository.save(participant);
 
-        return participantRepository.save(participant);
+        // Automatically generate and issue Certificate PDF on Check-Out
+        try {
+            certificateService.generateCertificate(participant.getId());
+            // Refresh updated participant entity
+            participant = participantRepository.findById(id).orElse(participant);
+        } catch (Exception certEx) {
+            System.err.println("Notice: Certificate generation during check-out warning: " + certEx.getMessage());
+        }
+
+        return participant;
     }
 
     public List<Participant> searchByName(String name) {
@@ -380,17 +390,7 @@ public class ParticipantService {
 
         participant.setCheckedIn(true);
         participant.setCheckInTime(java.time.LocalDateTime.now());
-        participantRepository.save(participant);
-
-        // Automatically generate and issue Certificate PDF
-        try {
-            certificateService.generateCertificate(participant.getId());
-            // Refresh updated participant entity
-            participant = participantRepository.findById(id).orElse(participant);
-        } catch (Exception certEx) {
-            System.err.println("Notice: Certificate generation during OTP check-in warning: " + certEx.getMessage());
-        }
-
-        return participant;
+        
+        return participantRepository.save(participant);
     }
 }

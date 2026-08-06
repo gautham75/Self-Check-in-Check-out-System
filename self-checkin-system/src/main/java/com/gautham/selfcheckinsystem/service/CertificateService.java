@@ -17,7 +17,7 @@ public class CertificateService {
     private final S3Service s3Service;
     private final EmailService emailService;
 
-    @org.springframework.beans.factory.annotation.Value("${app.backend.url:http://localhost:8080}")
+    @org.springframework.beans.factory.annotation.Value("${app.backend.url:${RENDER_EXTERNAL_URL:http://localhost:8080}}")
     private String backendUrl;
 
     public CertificateService(
