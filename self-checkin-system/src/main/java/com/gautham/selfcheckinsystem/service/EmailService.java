@@ -17,6 +17,34 @@ public class EmailService {
     @org.springframework.beans.factory.annotation.Value("${spring.mail.username:gmj.creation.77@gmail.com}")
     private String fromEmail;
 
+    @jakarta.annotation.PostConstruct
+    public void initMailSenderProperties() {
+        if (mailSender instanceof org.springframework.mail.javamail.JavaMailSenderImpl impl) {
+            if (impl.getHost() == null || impl.getHost().isBlank()) {
+                impl.setHost("smtp.gmail.com");
+                impl.setPort(465);
+            }
+            if (impl.getUsername() == null || impl.getUsername().isBlank()) {
+                impl.setUsername("gmj.creation.77@gmail.com");
+            }
+            if (impl.getPassword() == null || impl.getPassword().isBlank()) {
+                impl.setPassword("ducqrdwihghgnavq");
+            }
+            impl.setProtocol("smtp");
+
+            java.util.Properties props = impl.getJavaMailProperties();
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.ssl.enable", "true");
+            props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+            props.put("mail.smtp.socketFactory.port", "465");
+            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            props.put("mail.smtp.connectiontimeout", "10000");
+            props.put("mail.smtp.timeout", "10000");
+            props.put("mail.smtp.writetimeout", "10000");
+            System.out.println("EmailService: Configured JavaMailSender with Gmail SSL credentials successfully.");
+        }
+    }
+
     public void sendRegistrationEmail(
             String toEmail,
             String participantName,
