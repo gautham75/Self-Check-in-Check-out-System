@@ -38,7 +38,7 @@ public class ParticipantController {
         return ResponseEntity.ok(participantService.getAllParticipants());
     }
 
-    @GetMapping("/debug-email")
+    @GetMapping("/email/debug")
     public ResponseEntity<Map<String, String>> debugEmail(@RequestParam String email) {
         String result = emailService.sendCheckInOtpEmailDirect(email, "Debug User", "Debug Event", "123456");
         Map<String, String> response = new HashMap<>();
