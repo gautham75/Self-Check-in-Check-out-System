@@ -22,7 +22,7 @@ public class EmailService {
         if (mailSender instanceof org.springframework.mail.javamail.JavaMailSenderImpl impl) {
             if (impl.getHost() == null || impl.getHost().isBlank()) {
                 impl.setHost("smtp.gmail.com");
-                impl.setPort(465);
+                impl.setPort(587); // Switch to 587
             }
             if (impl.getUsername() == null || impl.getUsername().isBlank()) {
                 impl.setUsername("gmj.creation.77@gmail.com");
@@ -34,14 +34,13 @@ public class EmailService {
 
             java.util.Properties props = impl.getJavaMailProperties();
             props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.ssl.enable", "true");
+            props.put("mail.smtp.starttls.enable", "true"); // Enable STARTTLS
+            props.put("mail.smtp.starttls.required", "true"); // Require STARTTLS
             props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-            props.put("mail.smtp.socketFactory.port", "465");
-            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
             props.put("mail.smtp.connectiontimeout", "10000");
             props.put("mail.smtp.timeout", "10000");
             props.put("mail.smtp.writetimeout", "10000");
-            System.out.println("EmailService: Configured JavaMailSender with Gmail SSL credentials successfully.");
+            System.out.println("EmailService: Configured JavaMailSender with Gmail STARTTLS (Port 587) successfully.");
         }
     }
 
