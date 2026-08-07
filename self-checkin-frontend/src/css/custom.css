@@ -557,3 +557,100 @@ body {
     padding: 1.25rem;
   }
 }
+
+/* =========================================================
+   Professional QR Code Scanner UI Overrides (html5-qrcode)
+   ========================================================= */
+
+/* Replace the default dummy images with a professional SVG icon */
+#qr-reader-container img {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23212227' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7V5a2 2 0 0 1 2-2h2'/%3E%3Cpath d='M17 3h2a2 2 0 0 1 2 2v2'/%3E%3Cpath d='M21 17v2a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M7 21H5a2 2 0 0 1-2-2v-2'/%3E%3Crect x='7' y='7' width='10' height='10' rx='1'/%3E%3Cpath d='M7 12h10' stroke='%23FFD036' stroke-width='2'/%3E%3C/svg%3E");
+  width: 72px !important;
+  height: 72px !important;
+  margin: 15px auto 25px auto !important;
+  display: block !important;
+  opacity: 0.9;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  filter: drop-shadow(0 8px 16px rgba(33, 34, 39, 0.08));
+}
+
+#qr-reader-container img:hover {
+  transform: translateY(-4px) scale(1.05);
+  opacity: 1;
+}
+
+/* Hide the small "info" icon img in the top right to clean up UI */
+#qr-reader-container img[src*="info"],
+#qr-reader-container span[title="info"] img {
+  display: none !important;
+}
+
+/* Improve scanner container aesthetics */
+#qr-reader-container {
+  border: 2px dashed rgba(33, 34, 39, 0.15) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 2rem 1.5rem !important;
+  background: #FFFFFF !important;
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.02) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Style the action buttons inside the scanner (e.g. Request Camera Permissions) */
+#qr-reader-container button {
+  background: #212227 !important;
+  color: #FFD036 !important;
+  border: none !important;
+  border-radius: var(--radius-pill) !important;
+  padding: 0.65rem 1.5rem !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  margin-top: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  font-family: inherit !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: 0 4px 12px rgba(33, 34, 39, 0.15) !important;
+}
+
+#qr-reader-container button:hover {
+  background: #2E2F36 !important;
+  box-shadow: 0 6px 18px rgba(33, 34, 39, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+/* Style links (like "Scan an Image File") */
+#qr-reader-container a {
+  color: #6E7079 !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  display: inline-block !important;
+  margin-top: 12px !important;
+  transition: color 0.2s ease !important;
+  border-bottom: 1px dashed transparent;
+}
+
+#qr-reader-container a:hover {
+  color: #212227 !important;
+  border-bottom-color: #212227;
+}
+
+/* Style select dropdowns (for camera selection) */
+#qr-reader-container select {
+  border-radius: var(--radius-pill) !important;
+  border: 1px solid var(--border-color) !important;
+  padding: 0.5rem 1rem !important;
+  margin-bottom: 15px !important;
+  font-family: inherit !important;
+  font-size: 0.9rem !important;
+  background: #F9F9F9 !important;
+  color: #1C1D21 !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+#qr-reader-container select:focus {
+  border-color: #FFD036 !important;
+}
